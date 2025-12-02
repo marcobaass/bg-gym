@@ -1,4 +1,4 @@
-import { BoardState } from "@/types/board";
+import { BoardState, CubeAction } from "@/types/board";
 import { Point } from "@/types/board";
 import { Color } from "@/types/board";
 import { PositionAnalysis } from "@/types/board";
@@ -6,7 +6,8 @@ import { PositionAnalysis } from "@/types/board";
 const DEFAULT_ANALYSIS: PositionAnalysis = {
   positionId: '',
   moves: [],
-  optimalCubeAction: 'No Double'
+  optimalCubeAction: 'No Double',
+  analysisType: ''
 }
 
 // Notation for numbers of checkers on a certain position
@@ -27,6 +28,58 @@ const ENCODING_MAP: {[key: string]: number} = {
   'M': 13,
   'N': 14,
   'O': 15,
+}
+
+function getAnalysisType(xgid: string): AnalysisType {
+  // Checking for cube decision signatures (CR:Take, CR:Pass)
+  if (xgid.includes("CR:Take") || xgid.includes("CR:Pass")) {
+    return 'Cube';
+  }
+
+  // Checking for move signatures
+  if (xgid.includes("XG Roller++")) {
+    return 'Move';
+  }
+
+  return 'Unknown'
+}
+
+function parseAnalysis(xgid: string, positionId: string): PositionAnalysis {
+  // Determine Cube or Move Analysis
+  const type = getAnalysisType(xgid);
+
+  const positionPartIndex = xgid.indexOf(positionId);
+  const rawAnalysis = xgid.substring(positionPartIndex + positionId.length).trim();
+
+  let optimalCubeAction: CubeAction = 'No Double';
+  let bestMoves: AnalyzedMove[] = []
+
+  const CUBE_ACTION_REGEX = /CR:(\w+\s?\w+)/;
+  const cubeActionMatch = rawAnalysis.match(CUBE_ACTION_REGEX);
+
+  if (cubeActionMatch && cubeActionMatch[1]) {
+    optimalCubeAction = cubeActionMatch[1].trim() as CubeAction;
+  } else {
+    const BEST_CUBE_ACTION_REGEX = /\s*Best\ Cube\ action:\s*([\w\s\/]+)/;
+    cubeActionMatch = rawAnalysis.match(BEST_CUBE_ACTION_REGEX);
+
+    if (cubeActionMatch && cubeActionMatch[1]) {
+      let actionString = cubeActionMatch[1].trim();
+      actionString = actionString.replace(/\s\/\s/g, '/');
+      optimalCubeAction = actionString as CubeAction;
+    }
+
+  }
+
+
+  return {
+        positionId: positionId,
+        moves: bestMoves,
+        optimalCubeAction: optimalCubeAction,
+        analysisType: type
+  };
+
+
 }
 
 export function createBoardStateFromXgid(xgid:string): BoardState {
@@ -50,6 +103,8 @@ export function createBoardStateFromXgid(xgid:string): BoardState {
 
   // all checker positions
   const positionPart = xgidParts[0]
+  const dicePart: [number, number] = xgidParts[4].split("").map(numb => parseInt(numb, 10)) as [number, number]
+  const playerOnTurn = parseInt(xgidParts[3], 10) > 0 ? 'White' : 'Black'
 
   let pointIndex = 24;
   let totalWhiteCheckersOnBoard = 0;
@@ -75,14 +130,18 @@ export function createBoardStateFromXgid(xgid:string): BoardState {
     points[pointIndex].owner = owner;
 
     pointIndex --;
-
-
   }
+
+  points[0].owner = 'White'
+  points[0].count = 15 - totalWhiteCheckersOnBoard
+
+  points[25].owner = 'Black'
+  points[25].count = 15 - totalBlackCheckersOnBoard
 
   return {
     points,
-    dice: [0, 0],
-    playerOnTurn: 'White',
-    analysis: DEFAULT_ANALYSIS
+    dice: dicePart,
+    playerOnTurn: playerOnTurn,
+    analysis: parseAnalysis(xgid, positionPart)
   }
 }

@@ -1,5 +1,9 @@
 export type Color = 'White' | 'Black'
 
+export type CubeAction = 'No Double' | 'Double/Take' | 'Double/Pass' | 'Recube/Take' | 'Recube/Pass' | 'Take' | 'Pass';
+
+export type AnalysisType = 'Move' | 'Cube' | 'Unknown'
+
 export interface Point {
   id: number;
   owner: Color | undefined;
@@ -16,7 +20,8 @@ export interface AnalyzedMove {
 export interface PositionAnalysis {
   positionId: string;
   moves: AnalyzedMove[];
-  optimalCubeAction: string;
+  optimalCubeAction: CubeAction;
+  analysisType: AnalysisType;
 }
 
 export interface BoardState {

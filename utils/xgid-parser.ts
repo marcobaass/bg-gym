@@ -1,13 +1,10 @@
-import { BoardState, CubeAction } from "@/types/board";
-import { Point } from "@/types/board";
-import { Color } from "@/types/board";
-import { PositionAnalysis } from "@/types/board";
+import { BoardState, CubeAction, AnalysisType, AnalyzedMove, PositionAnalysis, Point, Color } from "@/types/board";
 
 const DEFAULT_ANALYSIS: PositionAnalysis = {
   positionId: '',
   moves: [],
   optimalCubeAction: 'No Double',
-  analysisType: ''
+  analysisType: 'Unknown'
 }
 
 // Notation for numbers of checkers on a certain position
@@ -61,7 +58,7 @@ function parseAnalysis(xgid: string, positionId: string): PositionAnalysis {
     optimalCubeAction = cubeActionMatch[1].trim() as CubeAction;
   } else {
     const BEST_CUBE_ACTION_REGEX = /\s*Best\ Cube\ action:\s*([\w\s\/]+)/;
-    cubeActionMatch = rawAnalysis.match(BEST_CUBE_ACTION_REGEX);
+    let cubeActionMatch = rawAnalysis.match(BEST_CUBE_ACTION_REGEX);
 
     if (cubeActionMatch && cubeActionMatch[1]) {
       let actionString = cubeActionMatch[1].trim();

@@ -8,10 +8,10 @@ type Props = {
   analysis: PositionAnalysis
 }
 
-export default function BoardRendere({boardState, analysis}: Props) {
+export default function BoardRenderer({boardState, analysis}: Props) {
 
-  const [width, setWidth] = useState(0)
-  const [height, setHeight] = useState(0)
+  const [width, setWidth] = useState<number | null>(null)
+  const [height, setHeight] = useState<number | null>(null)
 
 
   useEffect(() => {
@@ -29,6 +29,7 @@ export default function BoardRendere({boardState, analysis}: Props) {
 
   return (
     <div style={{ width: '100%', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      {width && height ? (
         <svg
             width={width}
             height={height}
@@ -40,6 +41,7 @@ export default function BoardRendere({boardState, analysis}: Props) {
                 Board Loaded. Size: {Math.round(width)}x{Math.round(height)}
             </text>
         </svg>
+      ) : (<><div>Loading Board ...</div></>)}
     </div>
   )
 }

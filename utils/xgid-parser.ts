@@ -1,12 +1,5 @@
 import { BoardState, CubeAction, AnalysisType, AnalyzedMove, PositionAnalysis, Point, Color } from "@/types/board";
 
-const DEFAULT_ANALYSIS: PositionAnalysis = {
-  positionId: '',
-  moves: [],
-  optimalCubeAction: 'No Double',
-  analysisType: 'Unknown'
-}
-
 // Notation for numbers of checkers on a certain position
 const ENCODING_MAP: {[key: string]: number} = {
   '-': 0,
@@ -49,22 +42,52 @@ function parseAnalysis(xgid: string, positionId: string): PositionAnalysis {
   const rawAnalysis = xgid.substring(positionPartIndex + positionId.length).trim();
 
   let optimalCubeAction: CubeAction = 'No Double';
-  let bestMoves: AnalyzedMove[] = []
+  const bestMoves: AnalyzedMove[] = []
 
   const CUBE_ACTION_REGEX = /CR:(\w+\s?\w+)/;
-  const cubeActionMatch = rawAnalysis.match(CUBE_ACTION_REGEX);
+  let cubeActionMatch = rawAnalysis.match(CUBE_ACTION_REGEX);
 
   if (cubeActionMatch && cubeActionMatch[1]) {
     optimalCubeAction = cubeActionMatch[1].trim() as CubeAction;
   } else {
     const BEST_CUBE_ACTION_REGEX = /\s*Best\ Cube\ action:\s*([\w\s\/]+)/;
-    let cubeActionMatch = rawAnalysis.match(BEST_CUBE_ACTION_REGEX);
+    cubeActionMatch = rawAnalysis.match(BEST_CUBE_ACTION_REGEX);
 
     if (cubeActionMatch && cubeActionMatch[1]) {
       let actionString = cubeActionMatch[1].trim();
       actionString = actionString.replace(/\s\/\s/g, '/');
       optimalCubeAction = actionString as CubeAction;
     }
+  }
+
+  //Use the FULL_MOVE_REGEX pattern to capture Move Notation (Group 1), Equity (Group 2), and Equity Loss (Group 4—optional, nested).
+  const FULL_MOVE_REGEX = /\s*\d+\.\s+XG\s+Roller\+\+\s+([\w\s\/\*\(\)\-\s]+)\s+eq:([+\-]\d+,\d+)\s*(\(([\+\-]\d+,\d+)\))?/g;
+
+  let moveMatch
+  let isFirstMove = true;
+
+  while ((moveMatch = FULL_MOVE_REGEX.exec(rawAnalysis)) !==null) {
+    const moveNotation = moveMatch[1].trim();
+    const equityString = moveMatch[2].replace(",", ".");
+    const equity = parseFloat(equityString)
+
+    let equityLoss = 0
+
+    if (!isFirstMove && moveMatch[4]) {
+      const lossString = moveMatch[4].replace(",", ".");
+      equityLoss = Math.abs(parseFloat(lossString));
+    }
+
+    const move: AnalyzedMove = {
+      moveNotation,
+      equity,
+      equityLoss,
+      isOptimal: isFirstMove
+    }
+
+    bestMoves.push(move)
+
+    isFirstMove = false
 
   }
 

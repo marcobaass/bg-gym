@@ -12,30 +12,15 @@ type Props = {
 
 export default function BoardRenderer({boardState, analysis}: Props) {
 
-  const [width, setWidth] = useState<number | null>(null)
-  const [height, setHeight] = useState<number | null>(null)
-
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWidth(window.innerWidth)
-      setHeight(window.innerHeight)
-    }
-
-    handleResize()
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
+  const VIEW_WIDTH = 1000
+  const VIEW_HEIGHT = 800
 
   return (
-    <div style={{ width: '100%', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      {width && height ? (
+    <div className="w-4/5 aspect-5/4 mx-auto relative">
         <>
           {(() => {
-            const containerWidth = width as number
-            const containerHeight = height as number
+            const containerWidth = VIEW_WIDTH
+            const containerHeight = VIEW_HEIGHT
 
             const POINT_WIDTH = containerWidth * UNIT_WIDTH_RATIO;
             const POINT_HEIGHT = containerHeight * POINT_HEIGHT_RATIO;
@@ -69,13 +54,12 @@ export default function BoardRenderer({boardState, analysis}: Props) {
 
           return (
             <svg
-                width={containerWidth}
-                height={containerHeight}
+                width="100%"
+                height="100%"
+                className='absolute inset-0 border-2 border-black border-solid w-full h-full font-sans'
                 viewBox={`0 0 ${containerWidth} ${containerHeight}`}
-                style={{ border: '2px solid black', maxWidth: '100%', maxHeight: '100%', fontFamily: 'Inter' }}
             >
                 <rect x="0" y="0" width={containerWidth} height={containerHeight} fill="#E0C4A4" />
-
                 {pointsToDraw}
 
                 <text x={10} y={20} fill="black" fontSize="16">
@@ -86,7 +70,6 @@ export default function BoardRenderer({boardState, analysis}: Props) {
           )
           })()}
         </>
-      ) : (<><div>Loading Board ...</div></>)}
     </div>
   )
 }

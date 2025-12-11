@@ -30,3 +30,31 @@ export interface BoardState {
   playerOnTurn: Color;
   analysis: PositionAnalysis;
 }
+
+export interface Move {
+  rank: number;
+  move: string;
+  equity: number;
+}
+
+export interface CubeActions {
+  action: string;
+  equity: number;
+}
+
+export interface BestCubeAction {
+  bestAction: string;
+}
+
+export interface Position {
+  analysisType: string;
+  barWhite: number;
+  barBlack: number;
+  bestMoves: Move[];
+  cubeActions: (CubeActions | BestCubeAction) [];
+  points: Point[];
+  cubeValue: number;
+  cubeOwner: 'White' | 'Black' | 'none';
+  pipCountWhite: number;
+  pipCountBlack: number;
+}

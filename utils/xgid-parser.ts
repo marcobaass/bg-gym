@@ -28,7 +28,7 @@ export function createBoardStateFromXgid(positionData:string): Position {
   }));
 
   const positionPart = xgidParts[0]
-  let pointIndex = 24
+  let pointIndex = 1
 
   for (let i = 0; i < positionPart.length && i < 26; i++) {
     const char = positionPart[i];
@@ -54,7 +54,7 @@ export function createBoardStateFromXgid(positionData:string): Position {
       // Characters 1-24 are the board points (24 down to 1)
       points[pointIndex].count = count;
       points[pointIndex].owner = owner;
-      pointIndex--;
+      pointIndex++;
     }
   }
 

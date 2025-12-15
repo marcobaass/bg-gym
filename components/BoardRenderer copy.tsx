@@ -153,6 +153,10 @@ export default function BoardRenderer({positionData}: Props) {
   )
 }
 
+
+
+
+
 function drawCheckers(positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_X_START_RELATIVE, BAR_WIDTH, FRAME_WIDTH) {
 
   const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2
@@ -160,8 +164,7 @@ function drawCheckers(positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_
 
   const checkers = []
   const VERTICAL_SPACING = CHECKER_RADIUS * 2
-  const STACK_OFFSET = CHECKER_RADIUS * 0.5
-  const MAX_STACK = 5
+  // const BASE_GAP = POINT_WIDTH * 0.1
 
   for(let i = 0; i < pointsData.length; i++) {
     const point = pointsData[i]
@@ -188,30 +191,19 @@ function drawCheckers(positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_
       }
 
       // Calculate Y base position
-      const CY_PADDING = 4
-
-      if (isTopHalf) {
+      if (isTopHalf && point.count <= 5) {
         // Top half: start from top, stack downward
-        cyBase = FRAME_WIDTH + CHECKER_RADIUS + CY_PADDING
+        cyBase = FRAME_WIDTH + CHECKER_RADIUS
       } else {
         // Bottom half: start from bottom, stack upward
-        cyBase = BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH  - CY_PADDING
+        cyBase = BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH
       }
 
       // Draw each checker on this point
       for(let j = 0; j < point.count; j++) {
-        const stackNumber = Math.floor(j / MAX_STACK)
-        const positionInStack = j % MAX_STACK
-
-        // Apply vertical offset for additional stacks (overlapping)
-        const cyStackOffset = isTopHalf
-          ? stackNumber * STACK_OFFSET  // Shift down for top half
-          : -stackNumber * STACK_OFFSET // Shift up for bottom half
-
-        // Calculate vertical position within the current stack
         const cy = isTopHalf
-          ? cyBase + VERTICAL_SPACING * positionInStack + cyStackOffset + CY_PADDING * j
-          : cyBase - VERTICAL_SPACING * positionInStack + cyStackOffset - CY_PADDING * j
+          ? cyBase + VERTICAL_SPACING * j  // Stack downward for top
+          : cyBase - VERTICAL_SPACING * j  // Stack upward for bottom
 
           checkers.push(
           <circle
@@ -220,9 +212,6 @@ function drawCheckers(positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_
             cy={cy}
             r={CHECKER_RADIUS}
             fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
-            stroke="#000"
-            strokeWidth="1"
-            className='drop-shadow-[2px_2px_1px]'
           />
         )
       }

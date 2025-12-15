@@ -1,37 +1,36 @@
-import React from 'react'
-import { BOARD_CONFIG, calculateBoardDimensions } from './boardUtils';
+"use client"
 import { Position } from '@/types/board';
-
-type CalculatedDimensions = ReturnType<typeof calculateBoardDimensions>;
-type BoardConfig = typeof BOARD_CONFIG;
+import React from 'react'
+import { BOARD_CONFIG, calculateBoardDimensions } from './board/boardUtils';
 
 type Props = {
-  boardConfig: BoardConfig;
-  positionData: Position | null; // <-- Added positionData (used in your JSX)
-  calculatedDimensions: CalculatedDimensions;
-  children?: React.ReactNode;
+  positionData: Position | null;
 }
 
-export default function BoardPoints({ boardConfig, positionData, calculatedDimensions, children }: Props) {
+export default function BoardRenderer({positionData}: Props) {
 
-  const {
-    BOARD_WIDTH,
-    BOARD_HEIGHT,
-    POINT_WIDTH,
-    BAR_WIDTH,
-    POINT_HEIGHT,
-    BAR_X_START_RELATIVE,
-  } = calculatedDimensions;
-
-  const FRAME_WIDTH = boardConfig.FRAME_WIDTH;
+  /**
+   * SVG Board as base
+   */
 
   return (
     <div className="w-4/5 aspect-5/3 mx-auto relative">
         {positionData ? (
         <>
           {(() => {
-            const svgWidth = boardConfig.VIEW_WIDTH;
-            const svgHeight = boardConfig.VIEW_HEIGHT;
+            const svgWidth = BOARD_CONFIG.VIEW_WIDTH;
+            const svgHeight = BOARD_CONFIG.VIEW_HEIGHT;
+
+            const {
+              BOARD_WIDTH,
+              BOARD_HEIGHT,
+              POINT_WIDTH,
+              BAR_WIDTH,
+              POINT_HEIGHT,
+              BAR_X_START_RELATIVE,
+            } = calculateBoardDimensions();
+
+            const FRAME_WIDTH = BOARD_CONFIG.FRAME_WIDTH;
 
             // Width of the playing area on one side of the bar (e.g., left half)
             const HALF_BOARD_WIDTH = BOARD_WIDTH / 2 - BAR_WIDTH / 2;
@@ -126,8 +125,15 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
                   />
 
                   {pointsToDraw}
-
-                  {children}
+                  {drawCheckers({
+                    positionData,
+                    POINT_WIDTH,
+                    BOARD_WIDTH,
+                    BOARD_HEIGHT,
+                    BAR_X_START_RELATIVE,
+                    BAR_WIDTH,
+                    FRAME_WIDTH
+                  })}
 
                   {/* Text position, offset by FRAME_WIDTH */}
                   <text x={FRAME_WIDTH + 10} y={FRAME_WIDTH + 20} fill="black" fontSize="16">
@@ -143,4 +149,93 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
         )}
     </div>
   )
+}
+
+type DrawCheckersProps = {
+  positionData: Position;
+  POINT_WIDTH: number;
+  BOARD_WIDTH: number;
+  BOARD_HEIGHT: number;
+  BAR_X_START_RELATIVE: number;
+  BAR_WIDTH: number;
+  FRAME_WIDTH: number;
+}
+
+function drawCheckers({positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_X_START_RELATIVE, BAR_WIDTH, FRAME_WIDTH}: DrawCheckersProps) {
+
+  const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2
+  const pointsData = positionData.points
+
+  const checkers = []
+  const VERTICAL_SPACING = CHECKER_RADIUS * 2
+  const STACK_OFFSET = CHECKER_RADIUS * 0.5
+  const MAX_STACK = 5
+
+  for(let i = 0; i < pointsData.length; i++) {
+    const point = pointsData[i]
+
+    if (point.count > 0) {
+      let cx, cyBase;
+      const isTopHalf = i >= 12; // Points 1-12 are in top half
+
+      // Calculate X position based on quadrant
+      if (i <= 5) {
+        // Bottom right quadrant (points 18-23)
+        cx = BOARD_WIDTH - FRAME_WIDTH + POINT_WIDTH * 0.05 - POINT_WIDTH * i
+      } else if (i <= 11) {
+        // Bottom left quadrant (points 12-17), skip the bar
+        cx = BOARD_WIDTH - FRAME_WIDTH + POINT_WIDTH * 0.05 - POINT_WIDTH * (i + 1)
+      } else if (i <= 17) {
+        // Top left quadrant (points 6-11)
+        const offset = i - 12
+        cx = FRAME_WIDTH + POINT_WIDTH * offset + POINT_WIDTH * 0.5
+      } else {
+        // Top right quadrant (points 0-5), skip the bar
+        const offset = i - 18
+        cx = FRAME_WIDTH + BAR_X_START_RELATIVE + BAR_WIDTH + POINT_WIDTH * offset + POINT_WIDTH * 0.5
+      }
+
+      // Calculate Y base position
+      const CY_PADDING = 4
+
+      if (isTopHalf) {
+        // Top half: start from top, stack downward
+        cyBase = FRAME_WIDTH + CHECKER_RADIUS + CY_PADDING
+      } else {
+        // Bottom half: start from bottom, stack upward
+        cyBase = BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH  - CY_PADDING
+      }
+
+      // Draw each checker on this point
+      for(let j = 0; j < point.count; j++) {
+        const stackNumber = Math.floor(j / MAX_STACK)
+        const positionInStack = j % MAX_STACK
+
+        // Apply vertical offset for additional stacks (overlapping)
+        const cyStackOffset = isTopHalf
+          ? stackNumber * STACK_OFFSET  // Shift down for top half
+          : -stackNumber * STACK_OFFSET // Shift up for bottom half
+
+        // Calculate vertical position within the current stack
+        const cy = isTopHalf
+          ? cyBase + VERTICAL_SPACING * positionInStack + cyStackOffset + CY_PADDING * j
+          : cyBase - VERTICAL_SPACING * positionInStack + cyStackOffset - CY_PADDING * j
+
+          checkers.push(
+          <circle
+            key={`checker-${i}-${j}`}
+            cx={cx}
+            cy={cy}
+            r={CHECKER_RADIUS}
+            fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
+            stroke="#000"
+            strokeWidth="1"
+            className='drop-shadow-[2px_2px_1px]'
+          />
+        )
+      }
+    }
+  }
+
+  return <>{checkers}</>
 }

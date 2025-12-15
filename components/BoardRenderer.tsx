@@ -27,11 +27,6 @@ export default function BoardRenderer({positionData}: Props) {
   const POINT_WIDTH = BOARD_WIDTH / 13; // 960 / 13 = ~73.846
   const BAR_WIDTH = POINT_WIDTH; // Bar width is now equal to point width
 
-  // Checker colors
-  const PLAYER_1_COLOR = '#FEEAA0'
-  const PLAYER_2_COLOR = '#444444'
-  const PLAYER_COLORS = { 1: PLAYER_1_COLOR, 2: PLAYER_2_COLOR }
-
   // Ratio for point height
   const POINT_HEIGHT_RATIO = 2 / 5;
   const POINT_HEIGHT = BOARD_HEIGHT * POINT_HEIGHT_RATIO; // 560 * 2/5 = 224
@@ -41,6 +36,7 @@ export default function BoardRenderer({positionData}: Props) {
 
   return (
     <div className="w-4/5 aspect-5/3 mx-auto relative">
+        {positionData ? (
         <>
           {(() => {
             const svgWidth = VIEW_WIDTH;
@@ -139,7 +135,15 @@ export default function BoardRenderer({positionData}: Props) {
                   />
 
                   {pointsToDraw}
-                  {drawCheckers(positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_X_START_RELATIVE, BAR_WIDTH, FRAME_WIDTH)}
+                  {drawCheckers({
+                    positionData,
+                    POINT_WIDTH,
+                    BOARD_WIDTH,
+                    BOARD_HEIGHT,
+                    BAR_X_START_RELATIVE,
+                    BAR_WIDTH,
+                    FRAME_WIDTH
+                  })}
 
                   {/* Text position, offset by FRAME_WIDTH */}
                   <text x={FRAME_WIDTH + 10} y={FRAME_WIDTH + 20} fill="black" fontSize="16">
@@ -149,11 +153,25 @@ export default function BoardRenderer({positionData}: Props) {
             )
           })()}
         </>
+
+        ) : (
+          <div>No position data</div>
+        )}
     </div>
   )
 }
 
-function drawCheckers(positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_X_START_RELATIVE, BAR_WIDTH, FRAME_WIDTH) {
+type DrawCheckersProps = {
+  positionData: Position;
+  POINT_WIDTH: number;
+  BOARD_WIDTH: number;
+  BOARD_HEIGHT: number;
+  BAR_X_START_RELATIVE: number;
+  BAR_WIDTH: number;
+  FRAME_WIDTH: number;
+}
+
+function drawCheckers({positionData, POINT_WIDTH, BOARD_WIDTH, BOARD_HEIGHT, BAR_X_START_RELATIVE, BAR_WIDTH, FRAME_WIDTH}: DrawCheckersProps) {
 
   const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2
   const pointsData = positionData.points

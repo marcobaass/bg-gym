@@ -60,9 +60,9 @@ export function createBoardStateFromXgid(positionData:string): Position {
 
   // Extracting values
 
-  const barWhite = points[0].count
+  const barWhite = points[25].count
 
-  const barBlack = points[25].count
+  const barBlack = points[0].count
   const boardPoints = points.slice(1, 25)
   const cubeValue = 1 << +xgidParts[1]
   const cubeOwner = ['Black', 'none', 'White'][parseInt(xgidParts[2]) + 1] as 'Black' | 'none' | 'White';

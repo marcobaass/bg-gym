@@ -29,11 +29,15 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
 
     const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2
     const pointsData = positionData.points
+    const barWhite = positionData.barWhite
+    const barBlack = positionData.barBlack
 
     const checkers = []
     const VERTICAL_SPACING = CHECKER_RADIUS * 2
     const STACK_OFFSET = CHECKER_RADIUS * 0.5
     const MAX_STACK = 5
+    // Gap between checkers
+    const CY_PADDING = 4
 
     for(let i = 0; i < pointsData.length; i++) {
       const point = pointsData[i]
@@ -59,8 +63,7 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
           cx = FRAME_WIDTH + BAR_X_START_RELATIVE + BAR_WIDTH + POINT_WIDTH * offset + POINT_WIDTH * 0.5
         }
 
-        // Calculate Y base position
-        const CY_PADDING = 4
+
 
         if (isTopHalf) {
           // Top half: start from top, stack downward
@@ -100,6 +103,43 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
         }
       }
     }
+
+    const drawBarCheckers = (count: number, color: 'White' | 'Black') => {
+      const isWhite = color === 'White'
+      const cyBase = isWhite
+        ? FRAME_WIDTH + CHECKER_RADIUS + CY_PADDING
+        : BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH - CY_PADDING
+
+      for(let i = 0; i < count; i++) {
+        const cx = POINT_WIDTH * 7 - FRAME_WIDTH + CHECKER_RADIUS * 0.1
+        const stackNumber = Math.floor(i / MAX_STACK)
+        const positionInStack = i % MAX_STACK
+
+        const cyStackOffset = isWhite
+          ? stackNumber * STACK_OFFSET
+          : -stackNumber * STACK_OFFSET
+
+        const cy = isWhite
+          ? cyBase + VERTICAL_SPACING * positionInStack + cyStackOffset + CY_PADDING * i
+          : cyBase - VERTICAL_SPACING * positionInStack + cyStackOffset - CY_PADDING * i
+
+        checkers.push(
+          <circle
+            key={`checker-bar${color}-${i}`}
+            cx={cx}
+            cy={cy}
+            r={CHECKER_RADIUS}
+            fill={isWhite ? '#FEEAA0' : '#444444'}
+            stroke="#000"
+            strokeWidth="1"
+            className='drop-shadow-[2px_2px_1px]'
+          />
+        )
+      }
+    }
+
+    if (barWhite) drawBarCheckers(barWhite, 'White')
+    if (barBlack) drawBarCheckers(barBlack, 'Black')
 
     return <>{checkers}</>
   }

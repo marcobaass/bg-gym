@@ -20,6 +20,8 @@ export function createBoardStateFromXgid(positionData:string): Position {
    * [9]: Match Length
    */
 
+  const playerToPlay = xgidParts[3] === '1' ? 'WhitesTurn' : 'BlacksTurn'
+
   // Initializing the points array (0: White on Bar, 1-24: Checker Positions, 25: Black on Bar)
   const points: Point[] = Array.from({ length: 26 }, (_, i) => ({
     id: i,
@@ -59,9 +61,8 @@ export function createBoardStateFromXgid(positionData:string): Position {
   }
 
   // Extracting values
-
+  const diceRoll = parseInt(xgidParts[4])
   const barWhite = points[25].count
-
   const barBlack = points[0].count
   const boardPoints = points.slice(1, 25)
   const cubeValue = 1 << +xgidParts[1]
@@ -94,14 +95,14 @@ export function createBoardStateFromXgid(positionData:string): Position {
     barBlack,
     bestMoves,
     cubeActions,
+    diceRoll,
+    playerToPlay,
     points: boardPoints,
     cubeValue,
     cubeOwner,
     pipCountWhite,
     pipCountBlack
   }
-
-  console.log('Position', position);
 
   return position as Position
 }

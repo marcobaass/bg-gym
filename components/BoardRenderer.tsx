@@ -4,6 +4,7 @@ import React from 'react'
 import { BOARD_CONFIG, calculateBoardDimensions } from './board/boardUtils';
 import BoardPoints from './board/BoardPoints';
 import BoardCheckers from './board/BoardCheckers';
+import Dice from './board/Dice';
 
 type Props = {
   positionData: Position | null;
@@ -16,8 +17,8 @@ export default function BoardRenderer({positionData}: Props) {
   return (
     <>
       <BoardPoints
-        boardConfig={BOARD_CONFIG}
         positionData={positionData}
+        boardConfig={BOARD_CONFIG}
         calculatedDimensions={calculatedDimensions}
       >
         <BoardCheckers
@@ -25,6 +26,10 @@ export default function BoardRenderer({positionData}: Props) {
           boardConfig={BOARD_CONFIG}
           calculatedDimensions={calculatedDimensions}
         />
+        <Dice
+          positionData={positionData}
+          boardConfig={BOARD_CONFIG}
+          calculatedDimensions={calculatedDimensions}/>
       </BoardPoints>
     </>
   )

@@ -52,6 +52,8 @@ export interface Position {
   barBlack: number;
   bestMoves: Move[];
   cubeActions: (CubeActions | BestCubeAction) [];
+  diceRoll: number;
+  playerToPlay: string;
   points: Point[];
   cubeValue: number;
   cubeOwner: 'White' | 'Black' | 'none';

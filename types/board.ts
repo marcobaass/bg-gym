@@ -59,4 +59,10 @@ export interface Position {
   cubeOwner: 'White' | 'Black' | 'none';
   pipCountWhite: number;
   pipCountBlack: number;
+  scoreWhite: number;
+  scoreBlack: number;
+  crawford: boolean;
+  matchLength: number;
+  whiteOff: number;
+  blackOff: number;
 }

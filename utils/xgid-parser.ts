@@ -13,11 +13,11 @@ export function createBoardStateFromXgid(positionData:string): Position {
    * [2]: Cube Ownership/State (0 = none, still in middle)
    * [3]: Player to Play (-1=Black, 1=White)
    * [4]: Dice Roll (e.g., "52")
-   * [5]: Off-Board Checkers White
-   * [6]: Off-Board Checkers Black
-   * [7]: Match Score White
-   * [8]: Match Score Black
-   * [9]: Match Length
+   * [5]: Match Score White
+   * [6]: Match Score Black
+   * [7]: Crawford - Match play: 1 means the current game is  Crawford, 0 means the current game is not played with the Crawford rule.
+   * [8]: Match Length
+   * [9]: Max Cube 8 Maximum value of the cube (2^value so here 2^8=256)
    */
 
   const playerToPlay = xgidParts[3] === '1' ? 'WhitesTurn' : 'BlacksTurn'
@@ -31,6 +31,9 @@ export function createBoardStateFromXgid(positionData:string): Position {
 
   const positionPart = xgidParts[0]
   let pointIndex = 1
+
+  let totalWhiteOnBoard = 0
+  let totalBlackOnBoard = 0
 
   for (let i = 0; i < positionPart.length && i < 26; i++) {
     const char = positionPart[i];
@@ -58,15 +61,28 @@ export function createBoardStateFromXgid(positionData:string): Position {
       points[pointIndex].owner = owner;
       pointIndex++;
     }
+    if (owner === 'White') {
+        totalWhiteOnBoard += count;
+    } else if (owner === 'Black') {
+        totalBlackOnBoard += count;
+    }
   }
 
   // Extracting values
   const diceRoll = parseInt(xgidParts[4])
+  const scoreWhite = parseInt(xgidParts[5])
+  const scoreBlack = parseInt(xgidParts[6])
+  const crawford = parseInt(xgidParts[7]) === 1
+  const matchLength = parseInt(xgidParts[8])
   const barWhite = points[25].count
   const barBlack = points[0].count
   const boardPoints = points.slice(1, 25)
   const cubeValue = 1 << +xgidParts[1]
   const cubeOwner = ['Black', 'none', 'White'][parseInt(xgidParts[2]) + 1] as 'Black' | 'none' | 'White';
+
+  //Born off checkers
+  const whiteOff = 15 - totalWhiteOnBoard
+  const blackOff = 15 - totalBlackOnBoard
 
   // Pip count
   let pipCountWhite = 0
@@ -101,7 +117,13 @@ export function createBoardStateFromXgid(positionData:string): Position {
     cubeValue,
     cubeOwner,
     pipCountWhite,
-    pipCountBlack
+    pipCountBlack,
+    scoreWhite,
+    scoreBlack,
+    crawford,
+    matchLength,
+    whiteOff,
+    blackOff
   }
 
   return position as Position

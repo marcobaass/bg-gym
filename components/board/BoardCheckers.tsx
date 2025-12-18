@@ -26,6 +26,7 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
   } = calculatedDimensions;
 
   const FRAME_WIDTH = boardConfig.FRAME_WIDTH;
+  const FRAME_WIDTH_X = boardConfig.FRAME_WIDTH_X;
 
     const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2
     const pointsData = positionData.points
@@ -49,18 +50,18 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
         // Calculate X position based on quadrant
         if (i <= 5) {
           // Bottom right quadrant (points 18-23)
-          cx = BOARD_WIDTH - FRAME_WIDTH + POINT_WIDTH * 0.05 - POINT_WIDTH * i
+          cx = FRAME_WIDTH_X + BOARD_WIDTH - POINT_WIDTH * (i - 0.5) - POINT_WIDTH
         } else if (i <= 11) {
           // Bottom left quadrant (points 12-17), skip the bar
-          cx = BOARD_WIDTH - FRAME_WIDTH + POINT_WIDTH * 0.05 - POINT_WIDTH * (i + 1)
+          cx = FRAME_WIDTH_X + BOARD_WIDTH - BAR_WIDTH - POINT_WIDTH * (i + 0.5)
         } else if (i <= 17) {
           // Top left quadrant (points 6-11)
           const offset = i - 12
-          cx = FRAME_WIDTH + POINT_WIDTH * offset + POINT_WIDTH * 0.5
+          cx = FRAME_WIDTH_X + POINT_WIDTH * (offset + 0.5)
         } else {
           // Top right quadrant (points 0-5), skip the bar
           const offset = i - 18
-          cx = FRAME_WIDTH + BAR_X_START_RELATIVE + BAR_WIDTH + POINT_WIDTH * offset + POINT_WIDTH * 0.5
+          cx = FRAME_WIDTH_X + BAR_X_START_RELATIVE + BAR_WIDTH + POINT_WIDTH * (offset + 0.5)
         }
 
 
@@ -111,7 +112,7 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
         : BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH - CY_PADDING
 
       for(let i = 0; i < count; i++) {
-        const cx = POINT_WIDTH * 7 - FRAME_WIDTH + CHECKER_RADIUS * 0.1
+        const cx = FRAME_WIDTH_X + BAR_X_START_RELATIVE + BAR_WIDTH / 2
         const stackNumber = Math.floor(i / MAX_STACK)
         const positionInStack = i % MAX_STACK
 

@@ -30,14 +30,16 @@ const getDotPosition = (value: number): Array<[number, number]> => {
   }
 }
 
-const renderDice = (value: number, x: number, y: number, size: number) => {
+const renderDice = (value: number, x: number, y: number, size: number, positionData: Position) => {
   const dotPositions = getDotPosition(value)
   const dotRadius = size * 0.08
+  const cubeColor = positionData.playerToPlay === 'WhitesTurn' ? 'white' : 'black'
+  const circleColor = positionData.playerToPlay === 'WhitesTurn' ? 'black' : 'white'
 
   return (
     <g key={`dice-${x}-${y}`}>
       <rect
-        fill='white'
+        fill={cubeColor}
         stroke='black'
         strokeWidth='2'
         width={size}
@@ -51,7 +53,7 @@ const renderDice = (value: number, x: number, y: number, size: number) => {
       {dotPositions.map(([relX, relY], idx) => (
         <circle
           key={`dot-${idx}`}
-          fill='black'
+          fill={circleColor}
           r={dotRadius}
           cx={x + size * relX}
           cy={y + size * relY}
@@ -64,10 +66,7 @@ const renderDice = (value: number, x: number, y: number, size: number) => {
 export default function Dice({positionData, calculatedDimensions, boardConfig}: Props) {
   const {
       BOARD_WIDTH,
-      POINT_WIDTH,
       BOARD_HEIGHT,
-      BAR_X_START_RELATIVE,
-      BAR_WIDTH,
   } = calculatedDimensions;
 
   const FRAME_WIDTH = boardConfig.FRAME_WIDTH;
@@ -82,8 +81,8 @@ export default function Dice({positionData, calculatedDimensions, boardConfig}: 
 
     return (
       <>
-        {renderDice(dice1, DICE_X - DICE_SIZE * 0.6, DICE_Y, DICE_SIZE)}
-        {renderDice(dice2, DICE_X + DICE_SIZE * 0.6, DICE_Y, DICE_SIZE)}
+        {renderDice(dice1, DICE_X - DICE_SIZE * 0.6, DICE_Y, DICE_SIZE, positionData)}
+        {renderDice(dice2, DICE_X + DICE_SIZE * 0.6, DICE_Y, DICE_SIZE, positionData)}
       </>
     )
   }

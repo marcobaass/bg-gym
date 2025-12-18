@@ -7,7 +7,7 @@ type BoardConfig = typeof BOARD_CONFIG;
 
 type Props = {
   boardConfig: BoardConfig;
-  positionData: Position | null; // <-- Added positionData (used in your JSX)
+  positionData: Position | null;
   calculatedDimensions: CalculatedDimensions;
   children?: React.ReactNode;
 }
@@ -24,6 +24,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
   } = calculatedDimensions;
 
   const FRAME_WIDTH = boardConfig.FRAME_WIDTH;
+  const FRAME_WIDTH_X = boardConfig.FRAME_WIDTH_X;
 
   return (
     <div className="w-4/5 aspect-5/3 mx-auto relative">
@@ -67,7 +68,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
               const Y2 = isTop ? POINT_HEIGHT + FRAME_WIDTH : svgHeight - POINT_HEIGHT - FRAME_WIDTH;
 
               // 2. X coordinates are offset by FRAME_WIDTH
-              const X1 = X_start_relative + FRAME_WIDTH;
+              const X1 = X_start_relative + FRAME_WIDTH_X;
               const X2 = X1 + (POINT_WIDTH / 2); // Center of the point's base
               const X3 = X1 + POINT_WIDTH; // Right edge of the point's base
 
@@ -101,7 +102,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
                   */}
                   {/* Left Half */}
                   <rect
-                      x={FRAME_WIDTH}
+                      x={FRAME_WIDTH_X}
                       y={FRAME_WIDTH}
                       width={HALF_BOARD_WIDTH}
                       height={BOARD_HEIGHT}
@@ -109,7 +110,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
                   />
                   {/* Right Half */}
                   <rect
-                      x={FRAME_WIDTH + BAR_X_START_RELATIVE + BAR_WIDTH}
+                      x={FRAME_WIDTH_X + BAR_X_START_RELATIVE + BAR_WIDTH}
                       y={FRAME_WIDTH}
                       width={HALF_BOARD_WIDTH}
                       height={BOARD_HEIGHT}
@@ -118,7 +119,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
 
                   {/* The Bar (Dark Wood) - positioned correctly in the center */}
                   <rect
-                      x={FRAME_WIDTH + BAR_X_START_RELATIVE}
+                      x={FRAME_WIDTH_X + BAR_X_START_RELATIVE}
                       y={FRAME_WIDTH}
                       width={BAR_WIDTH}
                       height={BOARD_HEIGHT}

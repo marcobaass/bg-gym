@@ -33,8 +33,8 @@ const getDotPosition = (value: number): Array<[number, number]> => {
 const renderDice = (value: number, x: number, y: number, size: number, positionData: Position) => {
   const dotPositions = getDotPosition(value)
   const dotRadius = size * 0.08
-  const cubeColor = positionData.playerToPlay === 'WhitesTurn' ? 'white' : 'black'
-  const circleColor = positionData.playerToPlay === 'WhitesTurn' ? 'black' : 'white'
+  const cubeColor = positionData.playerToPlay
+  const circleColor = positionData.playerToPlay === "White" ? 'Black' : 'White'
 
   return (
     <g key={`dice-${x}-${y}`}>

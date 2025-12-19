@@ -10,9 +10,21 @@ import DoublingCube from './board/DoublingCube';
 
 type Props = {
   positionData: Position | null;
+  selectedPoint: number | null;
+  availableMoves: number[];
+  onCheckerClick: (pointIndex: number) => void;
+  onDestinationClick: (destinationPoint: number) => void;
+  remainingDice: [];
 }
 
-export default function BoardRenderer({positionData}: Props) {
+export default function BoardRenderer({
+  positionData,
+  selectedPoint,
+  availableMoves,
+  remainingDice,
+  onCheckerClick,
+  onDestinationClick
+}: Props) {
 
   if (!positionData) {
     return <div>No position data available</div>;
@@ -33,8 +45,11 @@ export default function BoardRenderer({positionData}: Props) {
       >
         <BoardCheckers
           positionData={positionData}
-          boardConfig={BOARD_CONFIG}
-          calculatedDimensions={calculatedDimensions}
+        calculatedDimensions={calculatedDimensions}
+        boardConfig={BOARD_CONFIG}
+        selectedPoint={selectedPoint}
+        remainingDice={remainingDice}  // Add this
+        onCheckerClick={onCheckerClick}
         />
         <Dice
           positionData={positionData}

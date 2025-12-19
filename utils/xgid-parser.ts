@@ -20,7 +20,7 @@ export function createBoardStateFromXgid(positionData:string): Position {
    * [9]: Max Cube 8 Maximum value of the cube (2^value so here 2^8=256)
    */
 
-  const playerToPlay = xgidParts[3] === '1' ? 'WhitesTurn' : 'BlacksTurn'
+  const playerToPlay = xgidParts[3] === '1' ? 'White' : 'Black'
 
   // Initializing the points array (0: White on Bar, 1-24: Checker Positions, 25: Black on Bar)
   const points: Point[] = Array.from({ length: 26 }, (_, i) => ({

@@ -1,7 +1,6 @@
 import { Position } from '@/types/board';
 import { BOARD_CONFIG, calculateBoardDimensions } from './boardUtils';
 import React from 'react'
-import { CHECKER_RADIUS_RATIO } from '@/utils/renderer-utils';
 
 type CalculatedDimensions = ReturnType<typeof calculateBoardDimensions>;
 type BoardConfig = typeof BOARD_CONFIG;
@@ -22,8 +21,6 @@ export default function BornOffCheckers({ positionData, calculatedDimensions, bo
     BOARD_WIDTH,
     POINT_WIDTH,
     BOARD_HEIGHT,
-    BAR_X_START_RELATIVE,
-    BAR_WIDTH,
   } = calculatedDimensions;
 
   const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2

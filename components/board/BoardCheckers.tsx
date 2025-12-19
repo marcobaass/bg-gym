@@ -1,5 +1,6 @@
 import { Position } from '@/types/board';
 import { BOARD_CONFIG, calculateBoardDimensions } from './boardUtils';
+import { isValidPoint } from '@/utils/move-utils';
 import React from 'react'
 
 type CalculatedDimensions = ReturnType<typeof calculateBoardDimensions>;
@@ -9,9 +10,19 @@ type Props = {
     boardConfig: BoardConfig;
     positionData: Position | null;
     calculatedDimensions: CalculatedDimensions;
+    selectedPoint: number | null;  // Add this
+    remainingDice: number[];  // Add this
+    onCheckerClick: (pointIndex: number) => void;
 }
 
-export default function BoardCheckers({ positionData, calculatedDimensions, boardConfig }: Props) {
+export default function BoardCheckers({
+  positionData,
+  calculatedDimensions,
+  boardConfig,
+  selectedPoint,
+  remainingDice,
+  onCheckerClick
+}: Props) {
 
   if (!positionData) {
       return null;
@@ -64,8 +75,6 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
           cx = FRAME_WIDTH_X + BAR_X_START_RELATIVE + BAR_WIDTH + POINT_WIDTH * (offset + 0.5)
         }
 
-
-
         if (isTopHalf) {
           // Top half: start from top, stack downward
           cyBase = FRAME_WIDTH + CHECKER_RADIUS + CY_PADDING
@@ -74,7 +83,12 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
           cyBase = BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH  - CY_PADDING
         }
 
+        const isClickable = isValidPoint(positionData, i, remainingDice)
+        const isSelected = selectedPoint === i
+
         // Draw each checker on this point
+        const stackCheckers = []
+
         for(let j = 0; j < point.count; j++) {
           const stackNumber = Math.floor(j / MAX_STACK)
           const positionInStack = j % MAX_STACK
@@ -89,18 +103,32 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
             ? cyBase + VERTICAL_SPACING * positionInStack + cyStackOffset + CY_PADDING * j
             : cyBase - VERTICAL_SPACING * positionInStack + cyStackOffset - CY_PADDING * j
 
-            checkers.push(
+            const isTopChecker = j === point.count - 1
+
+            stackCheckers.push(
             <circle
               key={`checker-${i}-${j}`}
               cx={cx}
               cy={cy}
               r={CHECKER_RADIUS}
               fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
-              stroke="#000"
-              strokeWidth="1"
-              className='drop-shadow-[2px_2px_1px]'
+              stroke={isSelected ? '#FFD700' : '#000'}
+              strokeWidth={isSelected ? '3' : '1'}
+              className="drop-shadow-[2px_2px_1px] transition-all"
             />
-          )
+            )
+
+            checkers.push(
+              <g
+               key={`point-${i}`}
+               className={`
+                  ${isClickable ? 'cursor-pointer hover:[&>circle]:stroke-yellow-400 hover:[&>circle]:stroke-[2px]' : ''}
+                `}
+                onClick={isClickable ? () => onCheckerClick(i) : undefined}
+               >
+                {stackCheckers}
+               </g>
+            )
         }
       }
     }
@@ -126,6 +154,7 @@ export default function BoardCheckers({ positionData, calculatedDimensions, boar
 
         checkers.push(
           <circle
+            onClick={() => onCheckerClick(i)}
             key={`checker-bar${color}-${i}`}
             cx={cx}
             cy={cy}

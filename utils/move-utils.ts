@@ -43,7 +43,7 @@ export function getAvailableMoves(
 ): number[] {
   const destinations: number[] = []
   const playerColor = position.playerToPlay
-  const direction = playerColor === "White" ? 1 : -1
+  const direction = playerColor === "White" ? -1 : 1
 
   for(const die of diceValues) {
     const destination = fromPoint + (die * direction)

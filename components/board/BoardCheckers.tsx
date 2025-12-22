@@ -86,9 +86,6 @@ export default function BoardCheckers({
         const isClickable = isValidPoint(positionData, i, remainingDice)
         const isSelected = selectedPoint === i
 
-        // Draw each checker on this point
-        const stackCheckers = []
-
         for(let j = 0; j < point.count; j++) {
           const stackNumber = Math.floor(j / MAX_STACK)
           const positionInStack = j % MAX_STACK
@@ -105,30 +102,23 @@ export default function BoardCheckers({
 
             const isTopChecker = j === point.count - 1
 
-            stackCheckers.push(
-            <circle
-              key={`checker-${i}-${j}`}
-              cx={cx}
-              cy={cy}
-              r={CHECKER_RADIUS}
-              fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
-              stroke={isSelected ? '#FFD700' : '#000'}
-              strokeWidth={isSelected ? '3' : '1'}
-              className="drop-shadow-[2px_2px_1px] transition-all"
-            />
-            )
-
             checkers.push(
-              <g
-               key={`point-${i}`}
-               className={`
-                  ${isClickable ? 'cursor-pointer hover:[&>circle]:stroke-yellow-400 hover:[&>circle]:stroke-[2px]' : ''}
+              <circle
+                key={`checker-${i}-${j}`}
+                cx={cx}
+                cy={cy}
+                r={CHECKER_RADIUS}
+                fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
+                stroke={isSelected ? '#FFD700' : '#000'}
+                strokeWidth={isSelected ? '3' : '1'}
+                style={{ pointerEvents: isClickable ? 'auto' : 'none' }}
+                className={`
+                  transition-all duration-150
+                  ${isClickable ? 'cursor-pointer drop-shadow-md hover:stroke-yellow-400 hover:stroke-[2px]' : ''}
                 `}
                 onClick={isClickable ? () => onCheckerClick(i) : undefined}
-               >
-                {stackCheckers}
-               </g>
-            )
+              />
+            );
         }
       }
     }

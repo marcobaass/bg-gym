@@ -2,10 +2,17 @@
 
 import BoardRenderer from '@/components/BoardRenderer';
 import { Position } from '@/types/board';
-import { isValidPoint } from '@/utils/move-utils';
+import { getAvailableMoves, isValidPoint } from '@/utils/move-utils';
 import React, { useState, useEffect } from 'react'
 
-type Props = {}
+type Props = {
+  positionData: Position | null;
+  selectedPoint: number | null;
+  availableMoves: number[];  // Already correct
+  remainingDice: number[];  // Change from [] to number[]
+  onCheckerClick: (pointIndex: number) => void;
+  onDestinationClick: (destinationPoint: number) => void;
+}
 
 export default function Board({}: Props) {
 
@@ -32,7 +39,7 @@ export default function Board({}: Props) {
   //Game state
   const [currentPosition, setCurrentPosition] = useState<Position | null>(null)
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null)
-  const [availableMoves, setAvailableMoves] = useState<number | null>(null)
+  const [availableMoves, setAvailableMoves] = useState<number[]>([])
   const [remainingDice, setRemainingDice] = useState<number[]>([])
 
 // When the Position changes get new "position" from positionData
@@ -58,17 +65,33 @@ export default function Board({}: Props) {
   const handleCheckerClick = (pointIndex: number) => {
     console.log(`Clicked checker on point ${pointIndex + 1}`)
 
-    // check if point is clickable
+    // Check if point is clickable
     if (!isValidPoint(currentPosition, pointIndex, remainingDice)) {
-
       console.log('Point is not clickable');
       return
+    }
+
+    // Set selected point
+    setSelectedPoint(pointIndex)
+
+    // Calculate and set available moves
+    if (currentPosition) {
+      const moves = getAvailableMoves(pointIndex, remainingDice, currentPosition)
+      setAvailableMoves(moves)
+      console.log('Available moves:', moves)
     }
   }
 
   const handleDestinationClick = (destinationPoint: number) => {
-    console.log(`Moving to point ${destinationPoint}`)
-    // TODO: Execute move (Step 3)
+    if (selectedPoint === null || !currentPosition) return
+
+    console.log(`Moving from ${selectedPoint} to ${destinationPoint}`)
+
+    // TODO: Execute the move (Step 7)
+
+    // Clear selection
+    setSelectedPoint(null)
+    setAvailableMoves([])
   }
 
   const handleSubmitMove = () => {

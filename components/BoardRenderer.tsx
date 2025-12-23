@@ -7,6 +7,7 @@ import BoardCheckers from './board/BoardCheckers';
 import Dice from './board/Dice';
 import BornOffCheckers from './board/BornOffCheckers';
 import DoublingCube from './board/DoublingCube';
+import DestinationIndicators from './board/DestinationIndicators'
 
 type Props = {
   positionData: Position | null;
@@ -45,11 +46,17 @@ export default function BoardRenderer({
       >
         <BoardCheckers
           positionData={positionData}
-        calculatedDimensions={calculatedDimensions}
-        boardConfig={BOARD_CONFIG}
-        selectedPoint={selectedPoint}
-        remainingDice={remainingDice}  // Add this
-        onCheckerClick={onCheckerClick}
+          calculatedDimensions={calculatedDimensions}
+          boardConfig={BOARD_CONFIG}
+          selectedPoint={selectedPoint}
+          remainingDice={remainingDice}  // Add this
+          onCheckerClick={onCheckerClick}
+        />
+        <DestinationIndicators
+          availableMoves={availableMoves}
+          calculatedDimensions={calculatedDimensions}
+          boardConfig={BOARD_CONFIG}
+          onDestinationClick={onDestinationClick}
         />
         <Dice
           positionData={positionData}

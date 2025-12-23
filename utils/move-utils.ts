@@ -1,4 +1,11 @@
-import { Position, Color, Point } from "@/types/board";
+import { Position } from "@/types/board";
+
+export const BAR_POINT_WHITE = -1
+export const BAR_POINT_BLACK = -2
+
+export function getBarPointForPlayer(playerColor: string): number {
+  return playerColor === 'White' ? BAR_POINT_WHITE : BAR_POINT_BLACK
+}
 
 /**
  * Check if a point is clickable (has valid moves)
@@ -10,22 +17,37 @@ export function isValidPoint(
 ): boolean {
   if (!position) return false;
 
+  const playerColor = position.playerToPlay;
+
+  // Handle bar clicks
+  if (pointIndex === BAR_POINT_WHITE || pointIndex === BAR_POINT_BLACK) {
+    // Check if it's the correct player's turn
+    const isCorrectPlayer = (pointIndex === BAR_POINT_WHITE && playerColor === 'White') ||
+                            (pointIndex === BAR_POINT_BLACK && playerColor === 'Black');
+
+    if (!isCorrectPlayer) return false;
+
+    // Check if this player has checkers on bar
+    const hasCheckersOnBar = (pointIndex === BAR_POINT_WHITE && position.barWhite > 0) ||
+                             (pointIndex === BAR_POINT_BLACK && position.barBlack > 0);
+
+    if (!hasCheckersOnBar) return false;
+
+    // Check if player can enter with any dice
+    const entryMoves = getBarEntryMoves(remainingDice, position, playerColor);
+    return entryMoves.length > 0;
+  }
+
+  // Regular point validation
   const point = position.points[pointIndex];
 
   // Must be owned by current player
-  if (point.owner === 'White') {
-    if (position.playerToPlay !== 'White')
-    return false
-  } else {
-    if (position.playerToPlay !== 'Black') return false
-  }
-
+  if (point.owner !== playerColor) return false;
 
   // Must have checkers
   if (point.count === 0) return false
 
   // If player has checkers on Bar, can only play from bar
-  const playerColor = position.playerToPlay
   if (mustPlayFromBar(position, playerColor)) return false;
 
   // Check if at least one die can make a legal move
@@ -66,13 +88,51 @@ export function getAvailableMoves(
 }
 
 /**
+ * Get valid entry points from the bar
+ */
+export function getBarEntryMoves(
+  diceValues: number[],
+  position: Position,
+  playerColor: string
+): number[] {
+  const entryPoints: number[] = [];
+
+  // Black enters on points 0-5 (bottom right, points 1-6 in display)
+  // White enters on points 18-23 (top right, points 19-24 in display)
+
+  for (const die of diceValues) {
+    let entryPoint: number;
+
+    if (playerColor === 'Black') {
+      entryPoint = die - 1;
+    } else {
+      entryPoint = 24 - die;
+    }
+
+    // Check if entry point is valid
+    if (entryPoint < 0 || entryPoint >= 24) continue;
+
+    const destPoint = position.points[entryPoint];
+
+    // Can enter on empty, own checkers, or single opponent checker
+    if (destPoint.count === 0 ||
+        destPoint.owner === playerColor ||
+        (destPoint.owner !== playerColor && destPoint.count === 1)) {
+      entryPoints.push(entryPoint);
+    }
+  }
+
+  return [...new Set(entryPoints)];
+}
+
+/**
  * Check if a move to a specific destination is legal
  */
 export function isValidDestination(
   fromPoint: number,
   to: number,
   diceValue: number,
-  position: Position | null,
+  position: Position,
   playerColor: string
 ): boolean {
   const destPoint = position.points[to]

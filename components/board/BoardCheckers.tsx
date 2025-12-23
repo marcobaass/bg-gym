@@ -1,6 +1,6 @@
 import { Position } from '@/types/board';
 import { BOARD_CONFIG, calculateBoardDimensions } from './boardUtils';
-import { isValidPoint } from '@/utils/move-utils';
+import { BAR_POINT_BLACK, BAR_POINT_WHITE, isValidPoint } from '@/utils/move-utils';
 import React from 'react'
 
 type CalculatedDimensions = ReturnType<typeof calculateBoardDimensions>;
@@ -125,9 +125,13 @@ export default function BoardCheckers({
 
     const drawBarCheckers = (count: number, color: 'White' | 'Black') => {
       const isWhite = color === 'White'
+      const barPointIndex = isWhite ? BAR_POINT_WHITE : BAR_POINT_BLACK;
+
       const cyBase = isWhite
         ? FRAME_WIDTH + CHECKER_RADIUS + CY_PADDING
         : BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH - CY_PADDING
+
+      const isClickable = isValidPoint(positionData, barPointIndex, remainingDice);
 
       for(let i = 0; i < count; i++) {
         const cx = FRAME_WIDTH_X + BAR_X_START_RELATIVE + BAR_WIDTH / 2
@@ -144,7 +148,6 @@ export default function BoardCheckers({
 
         checkers.push(
           <circle
-            onClick={() => onCheckerClick(i)}
             key={`checker-bar${color}-${i}`}
             cx={cx}
             cy={cy}
@@ -152,7 +155,12 @@ export default function BoardCheckers({
             fill={isWhite ? '#FEEAA0' : '#444444'}
             stroke="#000"
             strokeWidth="1"
-            className='drop-shadow-[2px_2px_1px]'
+            style={{ pointerEvents: isClickable ? 'auto' : 'none' }}
+            className={`
+              transition-all duration-150
+              ${isClickable ? 'cursor-pointer drop-shadow-md hover:stroke-yellow-400 hover:stroke-[2px]' : ''}
+            `}
+            onClick={isClickable ? () => onCheckerClick(barPointIndex) : undefined}
           />
         )
       }

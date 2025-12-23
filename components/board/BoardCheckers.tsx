@@ -105,17 +105,31 @@ export default function BoardCheckers({
             checkers.push(
               <circle
                 key={`checker-${i}-${j}`}
+                data-point={i}
                 cx={cx}
                 cy={cy}
                 r={CHECKER_RADIUS}
                 fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
                 stroke={isSelected ? '#FFD700' : '#000'}
-                strokeWidth={isSelected ? '3' : '1'}
-                style={{ pointerEvents: isClickable ? 'auto' : 'none' }}
-                className={`
-                  transition-all duration-150
-                  ${isClickable ? 'cursor-pointer drop-shadow-md hover:stroke-yellow-400 hover:stroke-[2px]' : ''}
-                `}
+                // strokeWidth={isSelected ? '3' : '1'}
+                // style={{ pointerEvents: isClickable ? 'auto' : 'none' }}
+                // className={`
+                //   transition-all duration-150
+                //   point-${i}-checker
+                //   ${isClickable ? 'cursor-pointer' : ''}
+                // `}
+                onMouseEnter={isClickable ? () => {
+                  document.querySelectorAll(`[data-point="${i}"]`).forEach(el => {
+                    (el as SVGCircleElement).style.stroke = '#facc15';
+                    (el as SVGCircleElement).style.strokeWidth = '2';
+                  });
+                } : undefined}
+                onMouseLeave={isClickable ? () => {
+                  document.querySelectorAll(`[data-point="${i}"]`).forEach(el => {
+                    (el as SVGCircleElement).style.stroke = isSelected ? '#FFD700' : '#000';
+                    (el as SVGCircleElement).style.strokeWidth = isSelected ? '3' : '1';
+                  });
+                } : undefined}
                 onClick={isClickable ? () => onCheckerClick(i) : undefined}
               />
             );
@@ -149,6 +163,7 @@ export default function BoardCheckers({
         checkers.push(
           <circle
             key={`checker-bar${color}-${i}`}
+            data-point = {i}
             cx={cx}
             cy={cy}
             r={CHECKER_RADIUS}

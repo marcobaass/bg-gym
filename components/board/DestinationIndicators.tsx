@@ -17,6 +17,7 @@ export default function DestinationIndicators({
   boardConfig,
   onDestinationClick
 }: Props) {
+
   if (availableMoves.length === 0) return null
 
   const {

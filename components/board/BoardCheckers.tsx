@@ -1,7 +1,7 @@
 import { Position } from '@/types/board';
 import { BOARD_CONFIG, calculateBoardDimensions } from './boardUtils';
 import { BAR_POINT_BLACK, BAR_POINT_WHITE, isValidPoint } from '@/utils/move-utils';
-import React from 'react'
+import React, { useState } from 'react'
 
 type CalculatedDimensions = ReturnType<typeof calculateBoardDimensions>;
 type BoardConfig = typeof BOARD_CONFIG;
@@ -24,9 +24,7 @@ export default function BoardCheckers({
   onCheckerClick
 }: Props) {
 
-  if (!positionData) {
-      return null;
-  }
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
 
   const {
       BOARD_WIDTH,
@@ -40,9 +38,9 @@ export default function BoardCheckers({
   const FRAME_WIDTH_X = boardConfig.FRAME_WIDTH_X;
 
   const CHECKER_RADIUS = POINT_WIDTH * 0.8 / 2
-  const pointsData = positionData.points
-  const barWhite = positionData.barWhite
-  const barBlack = positionData.barBlack
+  const pointsData = positionData?.points
+  const barWhite = positionData?.barWhite
+  const barBlack = positionData?.barBlack
 
   const checkers = []
   const VERTICAL_SPACING = CHECKER_RADIUS * 2
@@ -51,12 +49,12 @@ export default function BoardCheckers({
   // Gap between checkers
   const CY_PADDING = 4
 
-  const clearAllHighlights = () => {
-    document.querySelectorAll('[data-point]').forEach(el => {
-      (el as SVGCircleElement).style.stroke = '#000';
-      (el as SVGCircleElement).style.strokeWidth = '1';
-    })
-  }
+  // const clearAllHighlights = () => {
+  //   document.querySelectorAll('[data-point]').forEach(el => {
+  //     (el as SVGCircleElement).style.stroke = '#000';
+  //     (el as SVGCircleElement).style.strokeWidth = '1';
+  //   })
+  // }
 
   for(let i = 0; i < pointsData.length; i++) {
     const point = pointsData[i]
@@ -92,6 +90,8 @@ export default function BoardCheckers({
 
       const isClickable = isValidPoint(positionData, i, remainingDice)
       const isSelected = selectedPoint === i
+      const isHovered = hoveredPoint === i
+      const needsHighlight = isSelected || (isClickable && isHovered)
 
       for(let j = 0; j < point.count; j++) {
         const stackNumber = Math.floor(j / MAX_STACK)
@@ -117,30 +117,16 @@ export default function BoardCheckers({
               cy={cy}
               r={CHECKER_RADIUS}
               fill={point.owner === 'White' ? '#FEEAA0' : '#444444'}
-              stroke={isSelected ? '#FFD700' : '#000'}
-              // strokeWidth={isSelected ? '3' : '1'}
-              // style={{ pointerEvents: isClickable ? 'auto' : 'none' }}
-              // className={`
-              //   transition-all duration-150
-              //   point-${i}-checker
-              //   ${isClickable ? 'cursor-pointer' : ''}
-              // `}
-              onMouseEnter={isClickable ? () => {
-                document.querySelectorAll(`[data-point="${i}"]`).forEach(el => {
-                  (el as SVGCircleElement).style.stroke = '#facc15';
-                  (el as SVGCircleElement).style.strokeWidth = '2';
-                });
-              } : undefined}
-              onMouseLeave={isClickable ? () => {
-                document.querySelectorAll(`[data-point="${i}"]`).forEach(el => {
-                  (el as SVGCircleElement).style.stroke = isSelected ? '#FFD700' : '#000';
-                  (el as SVGCircleElement).style.strokeWidth = isSelected ? '3' : '1';
-                });
-              } : undefined}
-              onClick={isClickable ? () => {
-                clearAllHighlights()
-                onCheckerClick(i)
-              } : undefined}
+              stroke={needsHighlight ? '#facc15' : '#000'}
+              strokeWidth={needsHighlight ? '3' : '1'}
+              onMouseEnter={isClickable ? () => setHoveredPoint(i): undefined}
+              onMouseLeave={isClickable ? () => setHoveredPoint(null) : undefined}
+              onClick={isClickable ? () => onCheckerClick(i) : undefined}
+
+              style={{
+                cursor: isClickable ? 'pointer' : 'default',
+                transition: 'stroke 0.15s ease, stroke-width 0.15s ease'
+              }}
             />
           );
       }
@@ -150,12 +136,14 @@ export default function BoardCheckers({
     const drawBarCheckers = (count: number, color: 'White' | 'Black') => {
       const isWhite = color === 'White'
       const barPointIndex = isWhite ? BAR_POINT_WHITE : BAR_POINT_BLACK;
+      const isClickable = isValidPoint(positionData, barPointIndex, remainingDice);
+      const isSelected = selectedPoint === barPointIndex;
+      const isHovered = hoveredPoint === barPointIndex;
+      const needsHighlight = isSelected || (isClickable && isHovered);
 
       const cyBase = isWhite
         ? FRAME_WIDTH + CHECKER_RADIUS + CY_PADDING
         : BOARD_HEIGHT - CHECKER_RADIUS + FRAME_WIDTH - CY_PADDING
-
-      const isClickable = isValidPoint(positionData, barPointIndex, remainingDice);
 
       for(let i = 0; i < count; i++) {
         const cx = FRAME_WIDTH_X + BAR_X_START_RELATIVE + BAR_WIDTH / 2
@@ -173,19 +161,20 @@ export default function BoardCheckers({
         checkers.push(
           <circle
             key={`checker-bar${color}-${i}`}
-            data-point = {i}
+            // data-point = {i}
             cx={cx}
             cy={cy}
             r={CHECKER_RADIUS}
             fill={isWhite ? '#FEEAA0' : '#444444'}
-            stroke="#000"
-            strokeWidth="1"
-            style={{ pointerEvents: isClickable ? 'auto' : 'none' }}
-            className={`
-              transition-all duration-150
-              ${isClickable ? 'cursor-pointer drop-shadow-md hover:stroke-yellow-400 hover:stroke-[2px]' : ''}
-            `}
+            stroke={needsHighlight ? '#facc15' : '#000'}
+            strokeWidth={needsHighlight ? '3' : '1'}
+            onMouseEnter={isClickable ? () => setHoveredPoint(barPointIndex) : undefined}
+            onMouseLeave={isClickable ? () => setHoveredPoint(null) : undefined}
             onClick={isClickable ? () => onCheckerClick(barPointIndex) : undefined}
+            style={{
+              cursor: isClickable ? 'pointer' : 'default',
+              transition: 'stroke 0.15s ease, stroke-width 0.15s ease'
+            }}
           />
         )
       }

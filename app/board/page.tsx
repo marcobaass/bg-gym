@@ -8,8 +8,8 @@ import React, { useState, useEffect } from 'react'
 type Props = {
   positionData: Position | null;
   selectedPoint: number | null;
-  availableMoves: number[];  // Already correct
-  remainingDice: number[];  // Change from [] to number[]
+  availableMoves: number[];
+  remainingDice: number[];
   onCheckerClick: (pointIndex: number) => void;
   onDestinationClick: (destinationPoint: number) => void;
 }
@@ -46,19 +46,24 @@ export default function Board({}: Props) {
   useEffect(() => {
     if (positionData.length > 0) {
       const position = positionData[currentPositionIndex]
-      setCurrentPosition(position)
 
+      let newDice: number[] = []
       if (position.diceRoll) {
         const dice1 = Math.floor(position.diceRoll / 10)
         const dice2 = position.diceRoll % 10
 
         // Handle doubles (e.g., "33" gives [3,3,3,3])
         if (dice1 === dice2) {
-          setRemainingDice([dice1, dice1, dice1, dice1])
+          newDice = ([dice1, dice1, dice1, dice1])
         } else {
-          setRemainingDice([dice1, dice2])
+          newDice = [dice1, dice2]
         }
       }
+
+      setCurrentPosition(position)
+      setSelectedPoint(null)
+      setAvailableMoves([])
+      setRemainingDice(newDice)
     }
   }, [currentPositionIndex, positionData])
 

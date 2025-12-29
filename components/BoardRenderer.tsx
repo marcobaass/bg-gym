@@ -49,7 +49,7 @@ export default function BoardRenderer({
           calculatedDimensions={calculatedDimensions}
           boardConfig={BOARD_CONFIG}
           selectedPoint={selectedPoint}
-          remainingDice={remainingDice}  // Add this
+          remainingDice={remainingDice}
           onCheckerClick={onCheckerClick}
         />
         <DestinationIndicators

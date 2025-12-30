@@ -15,7 +15,7 @@ type Props = {
   availableMoves: number[];
   onCheckerClick: (pointIndex: number) => void;
   onDestinationClick: (destinationPoint: number) => void;
-  remainingDice: [];
+  remainingDice: number[];
 }
 
 export default function BoardRenderer({

@@ -43,7 +43,7 @@ export default function Board({}: Props) {
 // When the Position changes get new "position" from positionData
   useEffect(() => {
     dispatch({ type: "POSITION_CHANGED", diceRoll: currentPosition?.diceRoll })
-  }, [currentPositionIndex, currentPosition?.diceRoll])
+  }, [currentPositionIndex, currentPosition])
 
   const handleCheckerClick = (pointIndex: number) => {
     console.log(`Clicked checker on point ${pointIndex + 1}`)

@@ -63,8 +63,15 @@ export function getAvailableMoves(
   diceValues: number[],
   position: Position
 ): number[] {
-  const destinations: number[] = []
   const playerColor = position.playerToPlay
+
+  // 1. Handle Bar Entry separately
+  if (fromPoint === BAR_POINT_WHITE || fromPoint === BAR_POINT_BLACK) {
+    return getBarEntryMoves(diceValues, position, playerColor);
+  }
+
+  // 2. Regular movement logic
+  const destinations: number[] = []
   const direction = playerColor === "White" ? -1 : 1
 
   for(const die of diceValues) {
@@ -121,7 +128,6 @@ export function getBarEntryMoves(
       entryPoints.push(entryPoint);
     }
   }
-
   return [...new Set(entryPoints)];
 }
 

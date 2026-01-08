@@ -3,7 +3,7 @@ import { Position } from "@/types/board";
 export const BAR_POINT_WHITE = -1
 export const BAR_POINT_BLACK = -2
 
-export function getBarPointForPlayer(playerColor: string): number {
+export function getBarPointForPlayer(playerColor: 'White' | 'Black'): number {
   return playerColor === 'White' ? BAR_POINT_WHITE : BAR_POINT_BLACK
 }
 
@@ -17,7 +17,7 @@ export function isValidPoint(
 ): boolean {
   if (!position) return false;
 
-  const playerColor = position.playerToPlay;
+  const playerColor = position.playerToPlay as 'White' | 'Black';
 
   // Handle bar clicks
   if (pointIndex === BAR_POINT_WHITE || pointIndex === BAR_POINT_BLACK) {
@@ -59,7 +59,7 @@ export function isValidPoint(
  * Get all legal destination points for a given Point
  */
 export function getAvailableMoves(
-  fromPoint: number,
+  fromPoint: number, //selected Checker
   diceValues: number[],
   position: Position
 ): number[] {
@@ -79,18 +79,19 @@ export function getAvailableMoves(
 
     // Check bearing off
     if (destination < 0 || destination >= 24) {
-      if (canBearOff(position, playerColor)) {
-        // -1 represents bearing off
-        destinations.push(-1)
-      }
-      continue
-    }
 
-    // Check if destination is valid
-    if (isValidDestination(fromPoint, destination, die, position, playerColor)) {
-      destinations.push(destination)
+      if (isValidBearingMove(fromPoint, die, position, playerColor)) {
+        // -1 for White off-board, 24 for Black off-board
+        destinations.push(playerColor === 'White' ? -1 : 24);
+      }
+    } else {
+      // Check if destination is valid
+      if (isValidDestination(fromPoint, destination, die, position, playerColor)) {
+        destinations.push(destination)
+      }
     }
   }
+
   return [...new Set(destinations)]
 }
 
@@ -100,7 +101,7 @@ export function getAvailableMoves(
 export function getBarEntryMoves(
   diceValues: number[],
   position: Position,
-  playerColor: string
+  playerColor: 'White' | 'Black'
 ): number[] {
   const entryPoints: number[] = [];
 
@@ -139,7 +140,7 @@ export function isValidDestination(
   to: number,
   diceValue: number,
   position: Position,
-  playerColor: string
+  playerColor: 'White' | 'Black'
 ): boolean {
   const destPoint = position.points[to]
 
@@ -168,7 +169,7 @@ export function isValidDestination(
  */
 export function mustPlayFromBar(
   position: Position,
-  playerColor: string
+  playerColor: 'White' | 'Black'
 ): boolean {
   if (playerColor === 'White') {
     return position.barWhite > 0
@@ -182,10 +183,11 @@ export function mustPlayFromBar(
  */
 export function canBearOff(
   position: Position,
-  playerColor: string
+  playerColor: 'White' | 'Black'
 ): boolean {
   const points = position.points
 
+  // Checks first all points outside Home and than checkers on bar
   if (playerColor === 'White') {
     for(let i = 6; i < 24; i++) {
       if (points[i].count > 0 && points[i].owner === 'White') return false
@@ -199,4 +201,43 @@ export function canBearOff(
     }
     return position.barBlack === 0
   }
+}
+
+export function isValidBearingMove(
+  fromPoint: number,
+  dieValue: number,
+  position: Position,
+  playerColor: 'White' | 'Black'
+): boolean {
+  if (!canBearOff(position, playerColor)) return false
+
+  // Converting 0-23 index to a 1-6 "distance from home"
+  // White: point 0 is 1, point 5 is 6.
+  // Black: point 23 is 1, point 18 is 6.
+  const distanceFromHome = playerColor === 'White' ? fromPoint +1 : 24 - fromPoint;
+
+  // Check if exact bearing off possible
+  if (dieValue === distanceFromHome) return true;
+
+  // Check if with higher die bearing off is possible
+  if (dieValue > distanceFromHome) {
+    // Check if no checkers further back
+    const furthest = getFurthestPoint(position, playerColor);
+    return distanceFromHome === furthest;
+  }
+
+  return false;
+}
+
+function getFurthestPoint(position: Position, playerColor: 'White' | 'Black'): number {
+  if (playerColor === 'White') {
+    for (let i = 5; i >= 0; i--) {
+      if (position.points[i].owner === 'White' && position.points[i].count > 0) return i + 1;
+    }
+  } else {
+    for (let i = 18; i <= 23; i++) {
+      if (position.points[i].owner === 'Black' && position.points[i].count > 0) return 24 - i;
+    }
+  }
+  return 0;
 }

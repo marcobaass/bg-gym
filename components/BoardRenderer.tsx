@@ -62,6 +62,7 @@ export default function BoardRenderer({
           positionData={positionData}
           boardConfig={BOARD_CONFIG}
           calculatedDimensions={calculatedDimensions}
+          remainingDice={remainingDice}
         />
         <BornOffCheckers
           positionData={positionData}

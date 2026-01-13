@@ -1,4 +1,3 @@
-import React from 'react'
 import { Position } from '@/types/board';
 import { BOARD_CONFIG, calculateBoardDimensions } from './boardUtils';
 
@@ -9,6 +8,7 @@ type Props = {
     boardConfig: BoardConfig;
     positionData: Position | null;
     calculatedDimensions: CalculatedDimensions;
+    remainingDice: number[];
 }
 
 const getDotPosition = (value: number): Array<[number, number]> => {
@@ -30,11 +30,13 @@ const getDotPosition = (value: number): Array<[number, number]> => {
   }
 }
 
-const renderDice = (value: number, x: number, y: number, size: number, positionData: Position) => {
+const renderDice = (value: number, x: number, y: number, size: number, positionData: Position, isUsed: boolean) => {
   const dotPositions = getDotPosition(value)
   const dotRadius = size * 0.08
-  const cubeColor = positionData.playerToPlay
-  const circleColor = positionData.playerToPlay === "White" ? 'Black' : 'White'
+  const cubeColor = isUsed ? '#94a3b8' : positionData.playerToPlay
+  const circleColor = isUsed
+    ? '#cbd5e1'
+    : (positionData.playerToPlay === "White" ? 'Black' : 'White')
 
   return (
     <g key={`dice-${x}-${y}`}>
@@ -63,7 +65,10 @@ const renderDice = (value: number, x: number, y: number, size: number, positionD
   )
 }
 
-export default function Dice({positionData, calculatedDimensions, boardConfig}: Props) {
+export default function Dice({positionData, calculatedDimensions, boardConfig, remainingDice}: Props) {
+
+  if (!positionData) return null;
+
   const {
       BOARD_WIDTH,
       BOARD_HEIGHT,
@@ -72,18 +77,36 @@ export default function Dice({positionData, calculatedDimensions, boardConfig}: 
   const FRAME_WIDTH = boardConfig.FRAME_WIDTH;
 
   const DICE_SIZE = BOARD_HEIGHT * 0.07
-  const DICE_X = BOARD_WIDTH / 4 + BOARD_WIDTH / 2 + DICE_SIZE / 4
+  const CENTER_X = BOARD_WIDTH - BOARD_WIDTH / 8 - FRAME_WIDTH / 2
   const DICE_Y = BOARD_HEIGHT * 0.5 - FRAME_WIDTH / 4
 
-  if (positionData?.diceRoll) {
-    const dice1 = Math.floor(positionData.diceRoll / 10)
-    const dice2 = (positionData.diceRoll) % 10
+  // Berechne den ursprünglichen Wurf (Full Set)
+  const d1 = Math.floor(positionData.diceRoll / 10);
+  const d2 = positionData.diceRoll % 10;
+  const originalDice = d1 === d2 ? [d1, d1, d1, d1] : [d1, d2];
 
-    return (
-      <>
-        {renderDice(dice1, DICE_X - DICE_SIZE * 0.6, DICE_Y, DICE_SIZE, positionData)}
-        {renderDice(dice2, DICE_X + DICE_SIZE * 0.6, DICE_Y, DICE_SIZE, positionData)}
-      </>
-    )
-  }
+  // Kopie der verbleibenden Würfel, um "verbraucht" zu tracken
+  const tempRemaining = [...remainingDice];
+
+  return (
+    <g id="dice-layer">
+      {originalDice.map((value, index) => {
+        // Prüfen, ob dieser spezifische Würfelwert noch im verbleibenden Set ist
+        const remainingIndex = tempRemaining.indexOf(value);
+        let isUsed = true;
+
+        if (remainingIndex !== -1) {
+          // Würfel ist noch da -> als aktiv markieren und aus temp-Liste entfernen
+          isUsed = false;
+          tempRemaining.splice(remainingIndex, 1);
+        }
+
+        // Layout: Würfel nebeneinander platzieren
+        const offsetMultiplier = index - (originalDice.length - 1) / 2;
+        const xPos = CENTER_X + offsetMultiplier * (DICE_SIZE * 1.2) - DICE_SIZE / 2;
+
+        return renderDice(value, xPos, DICE_Y, DICE_SIZE, positionData, isUsed);
+      })}
+    </g>
+  );
 }

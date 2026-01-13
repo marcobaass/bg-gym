@@ -67,7 +67,18 @@ export default function Board({}: Props) {
   const handleDestinationClick = (destinationPoint: number) => {
     if (ui.selectedPoint === null || !currentPosition) return
 
-    // TODO: Execute the move (Step 7)
+    const distance = Math.abs(destinationPoint - ui.selectedPoint)
+
+    // find used die in array
+    const dieIndex = ui.remainingDice.findIndex(die => die === distance)
+
+    // new Array with unused dies before and after used one
+    const newDice = [
+      ...ui.remainingDice.slice(0, dieIndex),
+      ...ui.remainingDice.slice(dieIndex + 1)
+    ]
+
+    dispatch({ type: 'SET_DICE', dice: newDice})
 
     // Clear selection
     dispatch( {type: 'SELECT_POINT', point: null})

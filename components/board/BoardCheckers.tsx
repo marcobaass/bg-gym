@@ -24,7 +24,10 @@ export default function BoardCheckers({
   onCheckerClick
 }: Props) {
 
+
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
+
+  if(!positionData) return
 
   const {
       BOARD_WIDTH,
@@ -106,8 +109,6 @@ export default function BoardCheckers({
         const cy = isTopHalf
           ? cyBase + VERTICAL_SPACING * positionInStack + cyStackOffset + CY_PADDING * j
           : cyBase - VERTICAL_SPACING * positionInStack + cyStackOffset - CY_PADDING * j
-
-          const isTopChecker = j === point.count - 1
 
           checkers.push(
             <circle

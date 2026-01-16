@@ -34,22 +34,24 @@ export default function Board({}: Props) {
   });
 
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0)
+  const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE)
 
   console.log("Data loaded from localStorage:", positionData);
 
-    const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE)
-    const currentPosition = positionData[currentPositionIndex] ?? null
 
-// When the Position changes get new "position" from positionData
+  // When the Position changes get new "position" from positionData
   useEffect(() => {
-    dispatch({ type: "POSITION_CHANGED", diceRoll: currentPosition?.diceRoll })
-  }, [currentPositionIndex, currentPosition])
+    const position = positionData[currentPositionIndex] ?? null
+    dispatch({ type: "POSITION_CHANGED", position })
+  }, [currentPositionIndex, positionData])
+
+
 
   const handleCheckerClick = (pointIndex: number) => {
     console.log(`Clicked checker on point ${pointIndex + 1}`)
 
     // Check if point is clickable
-    if (!isValidPoint(currentPosition, pointIndex, ui.remainingDice)) {
+    if (!isValidPoint(ui.currentPosition, pointIndex, ui.remainingDice)) {
       console.log('Point is not clickable');
       return
     }
@@ -58,16 +60,30 @@ export default function Board({}: Props) {
     dispatch({type: 'SELECT_POINT', point: pointIndex})
 
     // Calculate and set available moves
-    if (currentPosition) {
-      const moves = getAvailableMoves(pointIndex, ui.remainingDice, currentPosition)
+    if (ui.currentPosition) {
+      const moves = getAvailableMoves(pointIndex, ui.remainingDice, ui.currentPosition)
       dispatch({type: 'SET_MOVES', moves})
     }
   }
 
-  const handleDestinationClick = (destinationPoint: number) => {
-    if (ui.selectedPoint === null || !currentPosition) return
 
-    const distance = Math.abs(destinationPoint - ui.selectedPoint)
+
+  const handleDestinationClick = (destinationPoint: number) => {
+    if (ui.selectedPoint === null || !ui.currentPosition) return
+
+    // distance diffrent when from bar
+    let distance = 0
+    if (ui.selectedPoint === -1) {
+      distance = 24 - destinationPoint
+    } else if (ui.selectedPoint === -2) {
+      distance = destinationPoint + 1
+    } else {
+      distance = Math.abs(destinationPoint - ui.selectedPoint)
+    }
+
+    console.log("ui.selectedPoint: ", ui.selectedPoint);
+    console.log("distance: ", distance);
+
 
     // find used die in array
     const dieIndex = ui.remainingDice.findIndex(die => die === distance)
@@ -80,15 +96,24 @@ export default function Board({}: Props) {
 
     dispatch({ type: 'SET_DICE', dice: newDice})
 
+    // Move the checker
+    console.log(destinationPoint);
+
+    dispatch({ type: 'MOVE_CHECKER', from: ui.selectedPoint, to: destinationPoint })
+
     // Clear selection
     dispatch( {type: 'SELECT_POINT', point: null})
     dispatch({type: 'SET_MOVES', moves: []})
   }
 
+
+
   const handleSubmitMove = () => {
     console.log('Submitting move for analysis')
     // TODO: Compare with best moves (Step 4)
   }
+
+
 
   return (
     <>
@@ -132,7 +157,7 @@ export default function Board({}: Props) {
           </div>
 
           <BoardRenderer
-            positionData={currentPosition}
+            positionData={ui.currentPosition}
             selectedPoint={ui.selectedPoint}
             availableMoves={ui.availableMoves}
             remainingDice={ui.remainingDice}

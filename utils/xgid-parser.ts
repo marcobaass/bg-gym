@@ -96,7 +96,7 @@ export function createBoardStateFromXgid(positionData:string): Position {
   // Best moves or cube actions by equity
   let bestMoves: Move[] = []
   if (analysisType==='Move') {
-    bestMoves = moveAnalysis(positionData)
+    bestMoves = moveAnalysis(positionData, playerToPlay)
   }
 
   let cubeActions: (CubeActions | BestCubeAction)[] = []
@@ -173,9 +173,9 @@ function getAnalysisType(xgid: string): AnalysisType {
 
 
 
-function moveAnalysis(xgid: string): Move[] {
+function moveAnalysis(xgid: string, player: string): Move[] {
 
-  const regex = /^\s*(\d+)\.\s+.*?\s+([\d\/\s\*]+)\s+eq:([+\-]?\d+,\d+)/gm;
+  const regex = /^\s*(\d+)\.\s+.*?\s+([\d\/\s\*Bar]+)\s+eq:([+\-]?\d+,\d+)/gm;
 
   const bestMoves: Move[] = [];
   let match;
@@ -183,7 +183,7 @@ function moveAnalysis(xgid: string): Move[] {
   while ((match = regex.exec(xgid)) !== null) {
     bestMoves.push({
       rank: parseInt(match[1]),
-      move: match[2].trim(),
+      move: stringToNums(match[2].trim(), player),
       equity: parseFloat(match[3].replace(',', '.'))
     });
   }
@@ -191,7 +191,26 @@ function moveAnalysis(xgid: string): Move[] {
   return bestMoves
 }
 
+function stringToNums(str: string, player: string) {
+  const result: number[][] = []
 
+  const parts = str.trim().split(/\s+/)
+
+  for (const part of parts) {
+    const [from, to] = part.split("/")
+
+    const fromNum =
+    from === 'Bar'
+    ? player === 'White' ? -1 : -2
+    : Number(from)
+
+    const toNum = parseInt(to)
+
+    result.push([fromNum, toNum])
+  }
+
+  return result;
+}
 
 function cubeAnalysis(xgid: string): (CubeActions | BestCubeAction)[] {
   const cubeActionsRegex = /^\s*(No redouble|Redouble\/Take|Redouble\/Pass|Double\/Take|Double\/Pass):\s*([+\-]?\d+,\d+)/gmi;

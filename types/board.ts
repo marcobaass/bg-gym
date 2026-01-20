@@ -33,7 +33,7 @@ export interface BoardState {
 
 export interface Move {
   rank: number;
-  move: string;
+  move: number[][];
   equity: number;
 }
 

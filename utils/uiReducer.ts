@@ -98,10 +98,18 @@ export function uiReducer(state: UIState, action: Action): UIState {
       if (action.to >= 0 && action.to < 24) {
         updatedPosition.points = updatedPosition.points.map((point, index) => {
           if (index === action.to) {
+            // Check if this is an opponent's blot (single checker)
             const isOpponentBlot = point.owner !== null && point.owner !== checkerOwner && point.count === 1;
-            if (isOpponentBlot && updatedPosition.playerToPlay === 'Black') updatedPosition.barWhite += 1
-            if (isOpponentBlot && updatedPosition.playerToPlay === 'White') updatedPosition.barBlack += 1
 
+            // If hitting a blot, send opponent's checker to the bar
+            if (isOpponentBlot) {
+              if (point.owner === 'White') {
+                updatedPosition.barWhite += 1
+              } else {
+                updatedPosition.barBlack += 1
+              }
+            }
+            
             return {
               ...point,
               count: isOpponentBlot ? 1 : point.count + 1,

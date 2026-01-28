@@ -175,7 +175,7 @@ function getAnalysisType(xgid: string): AnalysisType {
 
 function moveAnalysis(xgid: string, player: string): Move[] {
 
-  const regex = /^\s*(\d+)\.\s+.*?\s+([\d\/\s\*Bar]+)\s+eq:([+\-]?\d+,\d+)/gm;
+  const regex = /^\s*(\d+)\.\s+.*?\s+([\d\/\s\*\(\)Bar]+)\s+eq:([+\-]?\d+,\d+)/gm;
 
   const bestMoves: Move[] = [];
   let match;
@@ -197,16 +197,25 @@ function stringToNums(str: string, player: string) {
   const parts = str.trim().split(/\s+/)
 
   for (const part of parts) {
-    const [from, to] = part.split("/")
+    // Check for (n) multiplier at the end (e.g., "23/18(2)")
+    const multiplierMatch = part.match(/\((\d+)\)$/)
+    const count = multiplierMatch ? parseInt(multiplierMatch[1]) : 1
+
+    // Remove the (n) to get clean move
+    const cleanPart = part.replace(/\(\d+\)$/, '')
+    const [from, to] = cleanPart.split("/")
 
     const fromNum =
-    from === 'Bar'
-    ? player === 'White' ? -1 : -2
-    : Number(from)
+      from === 'Bar'
+        ? player === 'White' ? -1 : -2
+        : Number(from)
 
     const toNum = parseInt(to)
 
-    result.push([fromNum, toNum])
+    // Push the move 'count' times
+    for (let i = 0; i < count; i++) {
+      result.push([fromNum, toNum])
+    }
   }
 
   return result;

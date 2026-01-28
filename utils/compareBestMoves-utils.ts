@@ -7,14 +7,29 @@ export function compareWithBestMoves(userMoves: UserMove[], bestMoves: BestMove[
     const normalizedUserMoves = normalizeUserMoves(userMoves);
     const normalizedBestMoves = normalizeBestMoves(bestMoves, userColor);
     const foundMatch = normalizedBestMoves.find(move => areMovesSame(normalizedUserMoves, move.move))
+    console.log('match', foundMatch)
     return foundMatch;
 }
 
 
 // Helpers
 function normalizeUserMoves(userMoves: UserMove[]): number[][] {
-    console.log('userMoves', userMoves);
-    return userMoves.map(move => [move.from, move.to])
+    const journeys: { start: number, current: number}[] = [];
+
+    for (const move of userMoves) {
+        const journeyIndex = journeys.findIndex(journey => journey.current === move.from);
+
+        if (journeyIndex !== -1) {
+            // Continue existing journey
+            journeys[journeyIndex].current = move.to;
+        } else {
+            // Start new journey
+            journeys.push({ start: move.from, current: move.to });
+        }
+    }
+
+    // Return as [start, end] pairs
+    return journeys.map(j => [j.start, j.current]);
 }
 
 function normalizeBestMoves(bestMoves: BestMove[], userColor: Color): BestMove[] {

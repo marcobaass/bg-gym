@@ -22,26 +22,13 @@
     [x] hit checker
 [x] correct parser - transform annotation string in array with best moves
     now: [[-2, 20][8, 2]] or [[9, 4]]
-[ ] check vs. top 5 moves ui.moves array vs. bestmoves array
+[x] check vs. top 5 moves ui.moves array vs. bestmoves array
+[ ] next position flow
+[ ] point system (best move 5 points etc...)
 [ ] when parsing check for forced move
 [ ] when cube action move
-
-Step 4: Create State for the Result Modal
-Add state to track:
-Whether the modal is open/closed
-The comparison result (user's rank, equity loss, all 5 best moves, etc.)
-
-Step 5: Build the Result Modal Component
-Create a modal/popup component that displays:
-All 5 (or however many) best moves with their equity
-Highlight which one the user played (or show "not in top moves" if they blundered)
-Show the equity loss
-
-Step 6: Trigger the Modal on Submit
-In handleSubmitMove:
-Run the comparison
-Set the result state
-Open the modal
+[ ] add numbers(notation) to the board
+[ ] undo
 
 Step 7: Add a "Next Position" Flow
 After viewing results, let the user:

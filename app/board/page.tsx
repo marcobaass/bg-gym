@@ -1,12 +1,13 @@
 'use client'
 
 import BoardRenderer from '@/components/BoardRenderer';
-import { Position } from '@/types/board';
+import { Position, Move } from '@/types/board';
 import { Color } from '@/types/board';
 import { getAvailableMoves, isValidPoint } from '@/utils/move-utils';
 import { uiReducer, INITIAL_UI_STATE } from '@/utils/uiReducer';
 import React, { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
+import ResultsModal from '@/components/ResultsModal';
 
 type Props = {
   positionData: Position | null;
@@ -38,9 +39,13 @@ export default function Board({}: Props) {
 
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0)
   const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE)
+  const [resultsModal, setShowResultsModal] = useState<boolean>(false)
+  const [result, setResult] = useState<Move | undefined>(undefined)
 
   console.log("Data loaded from localStorage:", positionData);
-  const userColor = positionData[currentPositionIndex].playerToPlay
+  
+const userColor = ui.currentPosition?.playerToPlay ?? 'White'
+
 
 
   // When the Position changes get new "position" from positionData
@@ -111,12 +116,19 @@ export default function Board({}: Props) {
   }
 
 
-
   const handleSubmitMove = () => {
-    const userMoves = ui.moves
-    const bestMoves = positionData[currentPositionIndex].bestMoves
-    const result = compareWithBestMoves(userMoves, bestMoves, userColor as Color);
-    console.log(result);
+    try {
+      const userMoves = ui.moves
+      
+      const bestMoves = positionData[currentPositionIndex].bestMoves
+      
+      const comparisonResult = compareWithBestMoves(userMoves, bestMoves, userColor as Color)
+      
+      setResult(comparisonResult as Move);
+      setShowResultsModal(true);
+    } catch (error) {
+      console.error('Error in handleSubmitMove:', error);
+    }
   }
 
 
@@ -170,9 +182,17 @@ export default function Board({}: Props) {
             onCheckerClick={handleCheckerClick}
             onDestinationClick={handleDestinationClick}
           />
+
+
         </>
       ) : (
         <div>No positions available</div>
+      )}      
+      {resultsModal && (
+        <ResultsModal
+        result={result}
+        bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
+        />
       )}
     </>
   )

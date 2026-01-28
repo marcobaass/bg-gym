@@ -13,6 +13,7 @@ export function compareWithBestMoves(userMoves: UserMove[], bestMoves: BestMove[
 
 // Helpers
 function normalizeUserMoves(userMoves: UserMove[]): number[][] {
+    console.log('userMoves', userMoves);
     return userMoves.map(move => [move.from, move.to])
 }
 
@@ -26,8 +27,12 @@ function normalizeBestMoves(bestMoves: BestMove[], userColor: Color): BestMove[]
     if (userColor === 'White') {
         copyBestMoves.forEach(bestMove => {
             bestMove.move.forEach(singleMove => {
-                singleMove[0] = singleMove[0] - 1;
-                singleMove[1] = singleMove[1] - 1;
+                if (singleMove[0] >= 0) {
+                    singleMove[0] = singleMove[0] - 1;
+                }
+                if (singleMove[1] >= 0) {
+                    singleMove[1] = singleMove[1] - 1;
+                }
             })
         })
     }
@@ -36,11 +41,16 @@ function normalizeBestMoves(bestMoves: BestMove[], userColor: Color): BestMove[]
     else {
         copyBestMoves.forEach(bestMove => {
             bestMove.move.forEach(singleMove => {
-                singleMove[0] = 24 - singleMove[0];
-                singleMove[1] = 24 - singleMove[1];
+                if (singleMove[0] >= 0) {
+                    singleMove[0] = 24 - singleMove[0];
+                }
+                if (singleMove[1] >= 0) {
+                    singleMove[1] = 24 - singleMove[1];
+                }
             })
         })
     }
+    console.log('copyBestMoves', copyBestMoves);
     return copyBestMoves;
 }
 

@@ -26,17 +26,6 @@
 [ ] when parsing check for forced move
 [ ] when cube action move
 
-Step 2: Create a Comparison Function
-Write a function that checks if two move arrays are equivalent. Remember:
-Move order might not matter (player can use dice in any sequence)
-Sort both arrays before comparing, or use a set-based approach
-
-Step 3: Find User's Move in Best Moves
-Loop through bestMoves and use your comparison function to find which one matches the user's move. Store:
-The rank (1 = best, 2 = second best, etc.)
-The equity of the user's move
-The equity loss vs the #1 move
-
 Step 4: Create State for the Result Modal
 Add state to track:
 Whether the modal is open/closed

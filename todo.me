@@ -25,3 +25,40 @@
 [ ] check vs. top 5 moves ui.moves array vs. bestmoves array
 [ ] when parsing check for forced move
 [ ] when cube action move
+
+Step 2: Create a Comparison Function
+Write a function that checks if two move arrays are equivalent. Remember:
+Move order might not matter (player can use dice in any sequence)
+Sort both arrays before comparing, or use a set-based approach
+
+Step 3: Find User's Move in Best Moves
+Loop through bestMoves and use your comparison function to find which one matches the user's move. Store:
+The rank (1 = best, 2 = second best, etc.)
+The equity of the user's move
+The equity loss vs the #1 move
+
+Step 4: Create State for the Result Modal
+Add state to track:
+Whether the modal is open/closed
+The comparison result (user's rank, equity loss, all 5 best moves, etc.)
+
+Step 5: Build the Result Modal Component
+Create a modal/popup component that displays:
+All 5 (or however many) best moves with their equity
+Highlight which one the user played (or show "not in top moves" if they blundered)
+Show the equity loss
+
+Step 6: Trigger the Modal on Submit
+In handleSubmitMove:
+Run the comparison
+Set the result state
+Open the modal
+
+Step 7: Add a "Next Position" Flow
+After viewing results, let the user:
+Close the modal
+Optionally auto-advance to the next position
+Bonus Considerations
+Format move notation for display (e.g., "13/7 8/5" instead of raw arrays)
+Color coding (green for optimal, yellow for minor error, red for blunder)
+Handle edge case: user's move not found in bestMoves at all

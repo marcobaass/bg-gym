@@ -2,9 +2,11 @@
 
 import BoardRenderer from '@/components/BoardRenderer';
 import { Position } from '@/types/board';
+import { Color } from '@/types/board';
 import { getAvailableMoves, isValidPoint } from '@/utils/move-utils';
 import { uiReducer, INITIAL_UI_STATE } from '@/utils/uiReducer';
 import React, { useState, useEffect, useReducer } from 'react'
+import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 
 type Props = {
   positionData: Position | null;
@@ -13,6 +15,7 @@ type Props = {
   remainingDice: number[];
   onCheckerClick: (pointIndex: number) => void;
   onDestinationClick: (destinationPoint: number) => void;
+  userColor: Color;
 }
 
 export default function Board({}: Props) {
@@ -37,6 +40,7 @@ export default function Board({}: Props) {
   const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE)
 
   console.log("Data loaded from localStorage:", positionData);
+  const userColor = positionData[currentPositionIndex].playerToPlay
 
 
   // When the Position changes get new "position" from positionData
@@ -109,8 +113,10 @@ export default function Board({}: Props) {
 
 
   const handleSubmitMove = () => {
-    console.log('Submitting move for analysis')
-    // TODO: Compare with best moves (Step 4)
+    const userMoves = ui.moves
+    const bestMoves = positionData[currentPositionIndex].bestMoves
+    const result = compareWithBestMoves(userMoves, bestMoves, userColor as Color);
+    console.log(result);
   }
 
 

@@ -7,6 +7,7 @@ export default function Home() {
       <div>
         <h1>Welcome to the Backgammon Gym</h1>
         <Link href='/board'>Go to the Training Center</Link>
+        <hr />
         <Link href='/parser'>Save a position</Link>
       </div>
   )

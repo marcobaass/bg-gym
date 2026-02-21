@@ -1,19 +1,38 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Move } from '@/types/board';
 import { Position } from '@/types/board';
 
 type Props = {
   result: Move | undefined;
   bestMoves: Move[];
+  currentPositionIndex: number;
+  setCurrentPositionIndex: (index: number) => void;
+  positionData: Position[];
+  score: number;
+  totalScore: number;
 }
 
 function getMistakeColor(equityDiff: number): string {
-  if (equityDiff <= 0.02) return 'green';
-  if (equityDiff <= 0.08) return 'yellow';
-  return 'red';
+  
+  if (equityDiff <= 0.02) {
+    return 'green';
+  } else if (equityDiff < 0.08) {
+    return 'yellow';
+  } else {
+    return 'red';
+  }
 }
 
-export default function ResultsModal({result, bestMoves}: Props) {
+export default function ResultsModal({
+  result,
+  bestMoves,
+  currentPositionIndex,
+  setCurrentPositionIndex,
+  positionData,
+  score,
+  totalScore,
+}: Props) {  
+
   return (
     <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center">
         <div className="bg-white/25 backdrop-blur-sm p-8 rounded-lg shadow-lg">
@@ -21,7 +40,6 @@ export default function ResultsModal({result, bestMoves}: Props) {
             {bestMoves.map(bestMove => {
                 const isUserMove = bestMove.rank === result?.rank;
                 const equityDiff = bestMoves[0].equity -bestMove.equity;
-                console.log('equityDiff: ', equityDiff);
                 return (
                     <li key={bestMove.rank} className="flex gap-3 rounded-md p-0.5" style={{backgroundColor: isUserMove ? getMistakeColor(equityDiff) : undefined}}>
                         <p>{bestMove.rank}.</p>
@@ -34,6 +52,20 @@ export default function ResultsModal({result, bestMoves}: Props) {
                     </li>
                 )
             })}
+          <div>
+            <h3>Score: {score}</h3>
+            <h3>Score: {totalScore}</h3>
+            <button
+              onClick={() => {
+                setCurrentPositionIndex(Math.min(positionData.length - 1, currentPositionIndex + 1))
+              }}
+              disabled={currentPositionIndex === positionData.length - 1}
+              className="px-4 py-2 bg-indigo-600 text-white rounded disabled:bg-gray-400"
+            
+            >
+              Next
+            </button>
+          </div>
         </div>
     </div>
   )

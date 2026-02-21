@@ -19,6 +19,17 @@ type Props = {
   userColor: Color;
 }
 
+function pointsFromEquityDiff(bestEquity: number, userEquity: number): number {
+  const equityDiff = bestEquity - userEquity;
+  if (equityDiff <= 0.02) {
+    return 6;
+  } else if (equityDiff < 0.08) {
+    return 3;
+  } else {
+    return 1;
+  }
+}
+
 export default function Board({}: Props) {
 
   const [positionData] = useState<Position[]>(() => {
@@ -52,9 +63,8 @@ const userColor = ui.currentPosition?.playerToPlay ?? 'White'
   useEffect(() => {
     const position = positionData[currentPositionIndex] ?? null
     dispatch({ type: "POSITION_CHANGED", position })
+    setShowResultsModal(false)
   }, [currentPositionIndex, positionData])
-
-
 
   const handleCheckerClick = (pointIndex: number) => {
     console.log(`Clicked checker on point ${pointIndex + 1}`)
@@ -123,7 +133,18 @@ const userColor = ui.currentPosition?.playerToPlay ?? 'White'
       const bestMoves = positionData[currentPositionIndex].bestMoves
       
       const comparisonResult = compareWithBestMoves(userMoves, bestMoves, userColor as Color)
-      
+
+      let pointsForMove: number
+        if (comparisonResult === undefined) {
+          // User's move is not in bestMoves at all → 0 points
+          pointsForMove = 0
+        } else {
+          const bestEquity = bestMoves[0]?.equity ?? 0
+          const userEquity = comparisonResult.equity ?? 0
+          pointsForMove = pointsFromEquityDiff(bestEquity, userEquity)
+        }
+
+      dispatch({ type: "ADD_SCORE", score: pointsForMove })      
       setResult(comparisonResult as Move);
       setShowResultsModal(true);
     } catch (error) {
@@ -192,6 +213,11 @@ const userColor = ui.currentPosition?.playerToPlay ?? 'White'
         <ResultsModal
         result={result}
         bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
+        currentPositionIndex={currentPositionIndex}
+        setCurrentPositionIndex={setCurrentPositionIndex}
+        positionData={positionData}
+        score={ui.score}
+        totalScore={ui.totalScore}
         />
       )}
     </>

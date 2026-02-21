@@ -18,6 +18,8 @@ type UIState = {
   remainingDice: number[];
   currentPosition: Position | null;
   moves: Move[];
+  score: number;
+  totalScore: number;
 };
 
 type Action =
@@ -26,6 +28,7 @@ type Action =
   | { type: "SET_MOVES"; moves: number[] }
   | { type: "SET_DICE"; dice: number[] }
   | { type: "MOVE_CHECKER"; from: number; to: number }
+  | { type: "ADD_SCORE"; score: number }
 
 /**
  * Constants & Initial State
@@ -36,6 +39,8 @@ export const INITIAL_UI_STATE: UIState = {
   remainingDice: [],
   currentPosition: null,
   moves: [],
+  score: 0,
+  totalScore: 0
 };
 
 /**
@@ -50,6 +55,8 @@ export function uiReducer(state: UIState, action: Action): UIState {
         remainingDice: diceFromRoll(action.position?.diceRoll),
         currentPosition: action.position,
         moves: [],
+        score: 0,
+        totalScore: state.totalScore
       }
     case "SELECT_POINT":
       return { ...state, selectedPoint: action.point }
@@ -57,6 +64,8 @@ export function uiReducer(state: UIState, action: Action): UIState {
       return { ...state, availableMoves: action.moves }
     case "SET_DICE":
       return { ...state, remainingDice: action.dice }
+    case "ADD_SCORE":
+      return { ...state, score: action.score, totalScore: state.totalScore + action.score }
     case "MOVE_CHECKER":
       if (!state.currentPosition) return state
 

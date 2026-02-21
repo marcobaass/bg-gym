@@ -23,18 +23,15 @@
 [x] correct parser - transform annotation string in array with best moves
     now: [[-2, 20][8, 2]] or [[9, 4]]
 [x] check vs. top 5 moves ui.moves array vs. bestmoves array
-[ ] next position flow
-[ ] point system (best move 5 points etc...)
+[x] next position flow
+[x] Handle edge case: user's move not found in bestMoves at all
+[x] point system (best move 5 points etc...)
 [ ] when parsing check for forced move
 [ ] when cube action move
 [ ] add numbers(notation) to the board
 [ ] undo
-
-Step 7: Add a "Next Position" Flow
-After viewing results, let the user:
-Close the modal
-Optionally auto-advance to the next position
-Bonus Considerations
-Format move notation for display (e.g., "13/7 8/5" instead of raw arrays)
-Color coding (green for optimal, yellow for minor error, red for blunder)
-Handle edge case: user's move not found in bestMoves at all
+[ ] what happens when user is through all positions? ResultModal greyed out button
+    some final result with how much wrong or right stats?
+    option for setting how much positions to train
+[ ] when parsing option to choose which category (new ones or existing ones)
+[ ] authentification and database implementation

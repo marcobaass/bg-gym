@@ -13,6 +13,14 @@ export default function ParserInput() {
 
     try {
       const positionData = createBoardStateFromXgid(xgidValue)
+
+      // Check for forced move
+      if (positionData.analysisType === 'Move' && positionData.bestMoves.length === 1) {
+        setError("This is a forced move")
+        return
+      }
+
+      console.log(positionData)
       if (positionData.analysisType === 'Cube' || positionData.analysisType === 'Move') {
         console.log('Success');
 

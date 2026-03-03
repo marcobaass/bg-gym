@@ -8,6 +8,7 @@ import { uiReducer, INITIAL_UI_STATE } from '@/utils/uiReducer';
 import React, { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
+import clsx from 'clsx';
 
 type Props = {
   positionData: Position | null;
@@ -55,7 +56,8 @@ export default function Board({}: Props) {
 
   console.log("Data loaded from localStorage:", positionData);
   
-const userColor = ui.currentPosition?.playerToPlay ?? 'White'
+  const userColor = ui.currentPosition?.playerToPlay ?? 'White'
+  const [cubeDecision, setCubeDecision] = useState<string | undefined>(undefined)
 
 
 
@@ -152,6 +154,23 @@ const userColor = ui.currentPosition?.playerToPlay ?? 'White'
     }
   }
 
+  const handleSubmitCubeDecision = () => {
+    try {
+      if (positionData[currentPositionIndex].analysisType !== 'Cube') {
+        throw new Error('This is not a cube position');
+      }
+
+      const cubeActions = positionData[currentPositionIndex].cubeActions
+      const bestCubeAction = cubeActions[0]
+      const userCubeAction = cubeActions[1]
+      
+      if (bestCubeAction.action === 'Double/Take' && userCubeAction.action === 'Double/Take') {
+      }
+    } catch (error) {
+      console.error('Error in handleSubmitCubeDecision:', error);
+    }
+  }
+
 
 
   return (
@@ -183,14 +202,69 @@ const userColor = ui.currentPosition?.playerToPlay ?? 'White'
               </button>
             </div>
 
-            {/* Submit button */}
-            <button
-              onClick={handleSubmitMove}
-              disabled={ui.remainingDice.length > 0}
-              className="mt-4 px-6 py-2 bg-green-600 text-white rounded disabled:bg-gray-400"
-            >
-              Submit Move
-            </button>
+            <div className="flex items-center justify-center gap-2">
+              {/* Cube decision buttons */}
+              {positionData[currentPositionIndex].analysisType === 'Cube' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCubeDecision('Double/Take')}
+                    className={clsx(
+                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
+                      cubeDecision === 'Double/Take'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    )}
+                  >
+                    Double/Take
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCubeDecision('No Double/Take')}
+                    className={clsx(
+                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
+                      cubeDecision === 'No Double/Take'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    )}
+                  >
+                    No Double/Take
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCubeDecision('Double/Pass')}
+                    className={clsx(
+                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
+                      cubeDecision === 'Double/Pass'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    )}
+                  >
+                    Double/Pass
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCubeDecision('TooGoodToDouble/Pass')}
+                    className={clsx(
+                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
+                      cubeDecision === 'TooGoodToDouble/Pass'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    )}
+                  >
+                    Too good to Double
+                  </button>
+                </>
+              )}
+              {/* Submit button */}
+              <button
+                onClick={handleSubmitMove}
+                disabled={ui.remainingDice.length > 0}
+                className="mt-4 px-6 py-2 bg-green-600 text-white rounded disabled:bg-gray-400"
+              >
+                Submit Move
+              </button>
+            </div>
 
 
           </div>

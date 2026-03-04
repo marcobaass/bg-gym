@@ -222,23 +222,44 @@ function stringToNums(str: string, player: string) {
 }
 
 function cubeAnalysis(xgid: string): (CubeActions | BestCubeAction)[] {
-  const cubeActionsRegex = /^\s*(No redouble|Redouble\/Take|Redouble\/Pass|Double\/Take|Double\/Pass):\s*([+\-]?\d+,\d+)/gmi;
   const cubeActions: (CubeActions | BestCubeAction)[] = [];
 
-  let match;
-  while ((match = cubeActionsRegex.exec(xgid)) !== null) {
+  // 1) Extract only the "Cubeful Equities" block
+  const cubefulMatch = xgid.match(
+    /Cubeful Equities:\s*([\s\S]*?)(?:\n\s*\n|\n\n|$)/i
+  );
+
+  if (!cubefulMatch) {
+    return cubeActions;
+  }
+
+  const cubefulSection = cubefulMatch[1];
+
+  // 2) Match the lines inside that block:
+  //    - No double / No redouble
+  //    - Double/Take / Redouble/Take
+  //    - Double/Pass / Redouble/Pass
+  const cubeActionsRegex =
+    /^\s*(No (?:double|redouble)|(?:Re)?double\/Take|(?:Re)?double\/Pass):\s*([+\-]?\d+,\d+)/gmi;
+
+  let match: RegExpExecArray | null;
+  while ((match = cubeActionsRegex.exec(cubefulSection)) !== null) {
+    const label = match[1];      // e.g. "No double", "No redouble", "Double/Take", "Redouble/Pass"
+    const rawEquity = match[2];  // e.g. "+0,851"
+
     cubeActions.push({
-      action: match[1],
-      equity: parseFloat(match[2].replace(',', '.'))
+      action: label,
+      equity: parseFloat(rawEquity.replace(',', '.')),
     });
   }
 
+  // 3) Parse "Best Cube action" from the whole text
   const bestCubeRegex = /Best Cube action:\s*(.+)/i;
   const bestMatch = xgid.match(bestCubeRegex);
 
   if (bestMatch) {
     cubeActions.push({
-      bestAction: bestMatch[1].trim()
+      bestAction: bestMatch[1].trim(), // e.g. "Too good to double / Pass" or "Too good to redouble / Pass"
     });
   }
 

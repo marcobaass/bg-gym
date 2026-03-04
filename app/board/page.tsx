@@ -1,7 +1,7 @@
 'use client'
 
 import BoardRenderer from '@/components/BoardRenderer';
-import { Position, Move } from '@/types/board';
+import { Position, Move, CubeDecision, CubeOptionRow, CubeActions, BestCubeAction, ParsedCubeDecisionSummary, CubeAction, ParsedCubeDecisionOption } from '@/types/board';
 import { Color } from '@/types/board';
 import { getAvailableMoves, isValidPoint } from '@/utils/move-utils';
 import { uiReducer, INITIAL_UI_STATE } from '@/utils/uiReducer';
@@ -21,7 +21,8 @@ type Props = {
 }
 
 function pointsFromEquityDiff(bestEquity: number, userEquity: number): number {
-  const equityDiff = bestEquity - userEquity;
+  const equityDiff = Math.abs(bestEquity - userEquity);
+
   if (equityDiff <= 0.02) {
     return 6;
   } else if (equityDiff < 0.08) {
@@ -57,10 +58,100 @@ export default function Board({}: Props) {
   console.log("Data loaded from localStorage:", positionData);
   
   const userColor = ui.currentPosition?.playerToPlay ?? 'White'
-  const [cubeDecision, setCubeDecision] = useState<string | undefined>(undefined)
+  const [cubeDecision, setCubeDecision] = useState<CubeDecision | null>(null);
 
+  const current = positionData[currentPositionIndex] ?? null
+  const isRedouble = current ? current.cubeOwner !== 'none' : false
 
+  const cubeDecisions: CubeDecision[] = [
+    'No Double',
+    'Double/Take',
+    'Double/Pass',
+    'Too good to double'
+  ];
 
+  const [cubeOptions, setCubeOptions] = useState<CubeOptionRow[]>([])
+  const [cubePoints, setCubePoints] = useState<number>(0)
+
+  function getCubeButtonLabel(decision: CubeDecision, isRedouble: boolean):string {
+    const prefix = isRedouble ? 'Re' : ''
+
+    switch (decision) {
+      case 'No Double':
+        return isRedouble ? 'No redouble' : 'No double';
+      case 'Double/Take':
+        return `${prefix}double/Take`;      // "Double/Take" or "Redouble/Take"
+      case 'Double/Pass':
+        return `${prefix}double/Pass`;      // "Double/Pass" or "Redouble/Pass"
+      case 'Too good to double':
+        return isRedouble ? 'Too good to redouble' : 'Too good to double';
+    }
+  }
+
+  function normalizeAction(label: string): CubeDecision | null {
+    const lower = label.toLowerCase();
+
+    if (lower === 'no double' || lower === 'no redouble') return 'No Double';
+    if (lower === 'double/take' || lower === 'redouble/take') return 'Double/Take';
+    if (lower === 'double/pass' || lower === 'redouble/pass') return 'Double/Pass';
+
+    return null;
+  }
+
+  function buildCubeDecisionsSummary(
+    cubeActions: (CubeActions | BestCubeAction)[],
+  ): ParsedCubeDecisionSummary | null {
+    const numeric = cubeActions.filter(
+      (item): item is CubeActions => 'action' in item
+    );
+    
+    const best = cubeActions.find(
+      (item): item is BestCubeAction => 'bestAction' in item
+    );
+
+    if (!best) {
+      console.warn('No BestCubeAction found in cubeActions', cubeActions);
+      return null;
+    }
+
+    const maybeOptions = numeric.map((num) => {
+      const decision = normalizeAction(num.action);
+      if (!decision) {
+        return null;
+      }
+      return {
+        decision: decision,
+        equity: num.equity,
+      }
+    })
+    const options = maybeOptions.filter(
+      (opt): opt is ParsedCubeDecisionOption => opt !== null
+    )
+
+    const bestLower = best.bestAction.toLowerCase();
+    let bestDecision: CubeDecision | null = null;
+
+    if (bestLower.startsWith('too good')) {
+      bestDecision = 'Too good to double';      
+    } else if (bestLower.includes('no double') || bestLower.includes('no redouble')) {
+      bestDecision = 'No Double';
+    } else if (bestLower.includes('double/take') || bestLower.includes('redouble/take')) {
+      bestDecision = 'Double/Take';
+    } else if (bestLower.includes('double/pass') || bestLower.includes('redouble/pass')) {
+      bestDecision = 'Double/Pass';
+    }
+
+    if (!bestDecision) {
+      console.warn('No best decision found in cubeActions', cubeActions);
+      return null;
+    }
+
+    return {
+      bestDecision,
+      options,
+    }
+  }
+    
   // When the Position changes get new "position" from positionData
   useEffect(() => {
     const position = positionData[currentPositionIndex] ?? null
@@ -155,20 +246,66 @@ export default function Board({}: Props) {
   }
 
   const handleSubmitCubeDecision = () => {
-    try {
-      if (positionData[currentPositionIndex].analysisType !== 'Cube') {
-        throw new Error('This is not a cube position');
-      }
-
-      const cubeActions = positionData[currentPositionIndex].cubeActions
-      const bestCubeAction = cubeActions[0]
-      const userCubeAction = cubeActions[1]
-      
-      if (bestCubeAction.action === 'Double/Take' && userCubeAction.action === 'Double/Take') {
-      }
-    } catch (error) {
-      console.error('Error in handleSubmitCubeDecision:', error);
+    if (positionData[currentPositionIndex].analysisType !== 'Cube') {
+      throw new Error('This is not a cube position');
     }
+
+    const cubeActions = positionData[currentPositionIndex].cubeActions;
+
+    const summary = buildCubeDecisionsSummary(cubeActions);
+
+    if (!summary) {
+      console.warn('No summary found for cube decisions', cubeActions);
+      return;
+    }
+
+    if (!cubeDecision) {
+      console.warn('No cube decision selected');
+      return;
+    }
+
+    if (cubeDecision === 'Too good to double' && summary.bestDecision !== 'Too good to double') {
+      const pointsForDecision = 1;
+
+      setCubePoints(pointsForDecision);
+      dispatch({ type: "ADD_SCORE", score: pointsForDecision });
+
+      console.log('cube summary', summary);
+      console.log('cubeDecision', cubeDecision, 'but bestDecision is', summary.bestDecision);
+      console.log('pointsForDecision', pointsForDecision);
+
+      return;
+    }
+
+    const bestOption = summary.options.find(
+      (opt) => opt.decision === summary.bestDecision
+    );
+
+    if (!bestOption) {
+      console.warn('Best option not found in summary', summary.options);
+      return;
+    }
+
+    const bestEquity = bestOption.equity;
+
+    const userOption = summary.options.find(opt => opt.decision === cubeDecision);
+
+    if (!userOption) {
+      console.warn('User option not found in summary', summary.options);
+      return;
+    }
+
+    const userEquity = userOption.equity;
+    const pointsForDecision = pointsFromEquityDiff(bestEquity, userEquity);
+
+    setCubePoints(pointsForDecision);
+
+    dispatch({ type: "ADD_SCORE", score: pointsForDecision })
+
+    console.log('cube summary', summary);
+    console.log('bestEquity', bestEquity);
+    console.log('userOption', userOption);
+    console.log('pointsForDecision', pointsForDecision);
   }
 
 
@@ -206,59 +343,27 @@ export default function Board({}: Props) {
               {/* Cube decision buttons */}
               {positionData[currentPositionIndex].analysisType === 'Cube' && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setCubeDecision('Double/Take')}
-                    className={clsx(
-                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
-                      cubeDecision === 'Double/Take'
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    )}
-                  >
-                    Double/Take
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCubeDecision('No Double/Take')}
-                    className={clsx(
-                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
-                      cubeDecision === 'No Double/Take'
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    )}
-                  >
-                    No Double/Take
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCubeDecision('Double/Pass')}
-                    className={clsx(
-                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
-                      cubeDecision === 'Double/Pass'
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    )}
-                  >
-                    Double/Pass
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCubeDecision('TooGoodToDouble/Pass')}
-                    className={clsx(
-                      "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
-                      cubeDecision === 'TooGoodToDouble/Pass'
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    )}
-                  >
-                    Too good to Double
-                  </button>
+                  {cubeDecisions.map((decision) => (
+                    <button
+                      key={decision}
+                      type="button"
+                      onClick={() => setCubeDecision(decision)}
+                      className={clsx(
+                        "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
+                        cubeDecision === decision
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                      )}
+                    >
+                      {getCubeButtonLabel(decision, isRedouble)}
+                    </button>
+                  ))}
                 </>
               )}
+              
               {/* Submit button */}
               <button
-                onClick={handleSubmitMove}
+                onClick={current?.analysisType === 'Move' ? handleSubmitMove : handleSubmitCubeDecision}
                 disabled={ui.remainingDice.length > 0}
                 className="mt-4 px-6 py-2 bg-green-600 text-white rounded disabled:bg-gray-400"
               >

@@ -27,9 +27,9 @@
 [x] Handle edge case: user's move not found in bestMoves at all
 [x] point system (best move 5 points etc...)
 [x] when parsing check for forced move
-[ ] when cube action move
+[x] when cube action move
     [x] tabs for parser move/cube
-    [ ] parser for cube action
+    [x] parser for cube action
     [x] error messages on submit analysis
 [ ] add numbers(notation) to the board
 [ ] undo
@@ -39,77 +39,25 @@
 [ ] when parsing option to choose which category (new ones or existing ones)
 [ ] authentification and database implementation
 
-1. Data & types
-Define cube decision types
-[ ] Add CubeDecision type (e.g. 'No Double' | 'Double/Take' | 'Double/Pass' | 'Too good to double') in types/board.ts.
-[ ] Add ParsedCubeDecisionOption and ParsedCubeDecisionSummary interfaces (decision + equity, and bestDecision + options).
-Define result shape for the cube results modal
-[ ] Create a CubeResult type (e.g. { bestDecision; userDecision; bestEquity; userEquity; points; }), either in types/board.ts or locally in app/board/page.tsx.
-2. Parsing / summary logic
-Improve cubeAnalysis if needed
-[ ] Ensure utils/xgid-parser.ts parses all relevant cube actions from XG (at least "No double", "Double/Take", "Double/Pass" plus Best Cube action:).
-[ ] Confirm that Position.cubeActions is correctly filled for cube positions.
-Build a summary helper
-[ ] Implement a pure function buildCubeDecisionSummary(cubeActions: (CubeActions | BestCubeAction)[]): ParsedCubeDecisionSummary | null.
-[ ] Inside it:
-[ ] Split CubeActions vs BestCubeAction.
-[ ] Map action strings to CubeDecision values.
-[ ] Map bestAction string to a bestDecision (Too good to double vs No Double vs Double/Take vs Double/Pass).
-[ ] Return { bestDecision, options }.
-(Optional) Attach summary to Position
-[ ] Decide if you want to:
-A) keep buildCubeDecisionSummary on the board page only, or
-B) call it in the parser and store cubeDecisionSummary on Position.
-3. Board state & branching
-Add state for cube decisions on app/board/page.tsx
-[ ] userCubeDecision: CubeDecision | null (current selection).
-[ ] cubeResult: CubeResult | null (data for modal).
-[ ] showCubeResultsModal: boolean (modal visibility).
-Reset state when position changes
-[ ] In the useEffect that runs on currentPositionIndex changes:
-[ ] Reset userCubeDecision to null.
-[ ] Reset cubeResult and showCubeResultsModal to initial values.
-Branch move vs cube logic
-[ ] Compute const current = positionData[currentPositionIndex];.
-[ ] Derive const isMove = current.analysisType === 'Move'; const isCube = current.analysisType === 'Cube';.
-[ ] Only allow move‑related actions (checker clicks, Submit Move button) when isMove.
-[ ] Only show cube decision buttons + Submit Decision button when isCube.
-4. Submit handler (core reverse‑engineering step)
-Implement handleSubmitCubeDecision
-[ ] Guard that current.analysisType === 'Cube'.
-[ ] Guard that userCubeDecision is not null (otherwise set a small error message or early return).
-[ ] Build a summary: const summary = buildCubeDecisionSummary(current.cubeActions);.
-[ ] Extract:
-[ ] bestEquity = Math.max(...summary.options.map(o => o.equity)).
-[ ] userOption = summary.options.find(o => o.decision === userCubeDecision).
-[ ] userEquity = userOption.equity.
-[ ] Compute points: const points = pointsFromEquityDiff(bestEquity, userEquity);.
-[ ] Dispatch score: dispatch({ type: "ADD_SCORE", score: points });.
-[ ] Set cubeResult with all needed info and set showCubeResultsModal(true).
-5. Cube results UI
-Create or extend a results modal
-[ ] Decide whether to:
-A) Extend ResultsModal to handle both move and cube results, or
-B) Create a separate CubeResultsModal component.
-[ ] Display:
-[ ] User’s decision vs best decision.
-[ ] Equity numbers and equity loss.
-[ ] Points awarded for this decision.
-[ ] Add a “Next” button similar to the move ResultsModal to go to the next position.
-Wire the modal into the render
-[ ] Conditionally render the cube results modal when showCubeResultsModal is true.
-[ ] Pass cubeResult, currentPositionIndex, setCurrentPositionIndex, positionData, and scores as needed.
-6. Testing / polishing
-Manual test flow
-[ ] Paste a cube analysis in the parser (Cube tab) and save.
-[ ] Open /board, navigate to that cube position.
-[ ] Verify:
-[ ] Board + cube are displayed.
-[ ] Cube buttons highlight correctly on click.
-[ ] Submit Move is disabled/hidden for cube positions (depending on your design).
-[ ] Submit Decision compares against XG and updates the score.
-[ ] Results modal shows correct info and “Next” works.
-UX polishing
-[ ] Maybe disable Submit Decision until a decision is selected.
-[ ] Add a small text above buttons: “Choose cube action”.
-[ ] If you like, color feedback (e.g. green if same decision as XG, yellow/red depending on equity loss).
+Yes, perfect time to finish the results modal for cubes.
+Let’s keep going in small, concrete steps.
+Next task: build cubeOptions rows in handleSubmitCubeDecision
+Right now, in handleSubmitCubeDecision you:
+Compute pointsForDecision.
+Call setCubePoints(pointsForDecision) and dispatch(...).
+But you don’t yet build cubeOptions for the modal.
+Your task:
+In handleSubmitCubeDecision, after you’ve decided bestEquity and userEquity and computed pointsForDecision (i.e. just before the console.log lines), build an array of CubeOptionRow using summary.options, like this in words:
+Start from summary.options.
+Sort them by equity descending (best first).
+Map each option to a CubeOptionRow:
+rank: index + 1
+label: use getCubeButtonLabel(opt.decision, isRedouble)
+equity: opt.equity
+equityDiff: Math.abs(bestEquity - opt.equity)
+isUserOption: opt.decision === cubeDecision
+Store the result in a local rows variable.
+Call setCubeOptions(rows); right after you compute them.
+Also call setShowResultsModal(true); so the existing ResultsModal opens for cube decisions too.
+Don’t change ResultsModal itself yet; just wire up rows and setShowResultsModal.
+When you’ve done that and clicked a cube decision, tell me what the modal shows (roughly), and we’ll clean up any remaining details there next.

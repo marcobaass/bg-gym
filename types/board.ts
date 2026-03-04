@@ -66,3 +66,35 @@ export interface Position {
   whiteOff: number;
   blackOff: number;
 }
+
+export type CubeDecision =
+  | 'No Double'
+  | 'Double/Take'
+  | 'Double/Pass'
+  | 'Too good to double';
+  
+export interface ParsedCubeDecisionOption {
+  decision: CubeDecision;
+  equity: number;
+}
+
+export interface ParsedCubeDecisionSummary {
+  bestDecision: CubeDecision;
+  options: ParsedCubeDecisionOption[];
+}
+
+type CubeResult = {
+  bestDecision: CubeDecision;
+  userDecision: CubeDecision;
+  bestEquity: number;
+  userEquity: number;
+  points: number;
+};
+
+export type CubeOptionRow = {
+  rank: number;
+  label: string;
+  equity: number;
+  equityDiff: number;
+  isUserOption: boolean;
+}

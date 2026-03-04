@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Move } from '@/types/board';
+import { Move, CubeOptionRow } from '@/types/board';
 import { Position } from '@/types/board';
 
 type Props = {
@@ -10,6 +10,8 @@ type Props = {
   positionData: Position[];
   score: number;
   totalScore: number;
+  cubeOptions?: CubeOptionRow[];
+  cubePoints?: number;
 }
 
 function getMistakeColor(equityDiff: number): string {
@@ -31,29 +33,47 @@ export default function ResultsModal({
   positionData,
   score,
   totalScore,
+  cubeOptions,
+  cubePoints,
 }: Props) {  
 
   return (
     <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center">
         <div className="bg-white/25 backdrop-blur-sm p-8 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold mb-4">Results</h2>
-            {bestMoves.map(bestMove => {
-                const isUserMove = bestMove.rank === result?.rank;
-                const equityDiff = bestMoves[0].equity -bestMove.equity;
-                return (
-                    <li key={bestMove.rank} className="flex gap-3 rounded-md p-0.5" style={{backgroundColor: isUserMove ? getMistakeColor(equityDiff) : undefined}}>
-                        <p>{bestMove.rank}.</p>
-                        {bestMove.move.map(move => {
-                            const from = move[0] < 0 ? 'Bar' : move[0];
-                            const to = move[1];
-                            return `${from}/${to}`;
-                        }).join(', ')}
-                        <p>{(bestMove.equity - bestMoves[0].equity).toFixed(3)}</p>
-                    </li>
-                )
-            })}
+            {cubeOptions && cubeOptions.length > 0
+            ? cubeOptions.map(opt => {
+              return (
+                <li
+                  key={opt.rank}
+                  className="flex gap-3 rounded-md p-0.5"
+                  style={{backgroundColor: opt.isUserOption ? getMistakeColor(opt.equityDiff) : undefined                    
+                  }}
+                >
+                  <p>{opt.rank}.</p>
+                  <p>{opt.label}</p>
+                  <p>{(opt.equity - cubeOptions[0].equity).toFixed(3)}</p>
+                </li>
+              );
+            })
+          : bestMoves.map(bestMove => {
+              const isUserMove = bestMove.rank === result?.rank;
+              const equityDiff = bestMoves[0].equity -bestMove.equity;
+              return (
+                  <li key={bestMove.rank} className="flex gap-3 rounded-md p-0.5" style={{backgroundColor: isUserMove ? getMistakeColor(equityDiff) : undefined}}>
+                      <p>{bestMove.rank}.</p>
+                      {bestMove.move.map(move => {
+                          const from = move[0] < 0 ? 'Bar' : move[0];
+                          const to = move[1];
+                          return `${from}/${to}`;
+                      }).join(', ')}
+                      <p>{(bestMove.equity - bestMoves[0].equity).toFixed(3)}</p>
+                  </li>
+              )
+          })}
+
           <div>
-            <h3>Score: {score}</h3>
+            <h3>Points: {cubeOptions && cubeOptions.length > 0 ? cubePoints : score}</h3>
             <h3>Score: {totalScore}</h3>
             <button
               onClick={() => {

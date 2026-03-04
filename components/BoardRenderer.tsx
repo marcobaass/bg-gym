@@ -58,12 +58,12 @@ export default function BoardRenderer({
           boardConfig={BOARD_CONFIG}
           onDestinationClick={onDestinationClick}
         />
-        <Dice
+        {positionData.analysisType === 'Move' && (<Dice
           positionData={positionData}
           boardConfig={BOARD_CONFIG}
           calculatedDimensions={calculatedDimensions}
           remainingDice={remainingDice}
-        />
+        />)}
         <BornOffCheckers
           positionData={positionData}
           boardConfig={BOARD_CONFIG}

@@ -92,7 +92,7 @@ type CubeResult = {
 };
 
 export type CubeOptionRow = {
-  rank: number;
+  rank?: number;
   label: string;
   equity: number;
   equityDiff: number;

@@ -31,6 +31,9 @@
     [x] tabs for parser move/cube
     [x] parser for cube action
     [x] error messages on submit analysis
+    [x] ResultsModal for cube
+    [ ] indicator whos turn it is
+[ ] refactor Page.tsx
 [ ] add numbers(notation) to the board
 [ ] undo
 [ ] what happens when user is through all positions? ResultModal greyed out button
@@ -39,25 +42,3 @@
 [ ] when parsing option to choose which category (new ones or existing ones)
 [ ] authentification and database implementation
 
-Yes, perfect time to finish the results modal for cubes.
-Let’s keep going in small, concrete steps.
-Next task: build cubeOptions rows in handleSubmitCubeDecision
-Right now, in handleSubmitCubeDecision you:
-Compute pointsForDecision.
-Call setCubePoints(pointsForDecision) and dispatch(...).
-But you don’t yet build cubeOptions for the modal.
-Your task:
-In handleSubmitCubeDecision, after you’ve decided bestEquity and userEquity and computed pointsForDecision (i.e. just before the console.log lines), build an array of CubeOptionRow using summary.options, like this in words:
-Start from summary.options.
-Sort them by equity descending (best first).
-Map each option to a CubeOptionRow:
-rank: index + 1
-label: use getCubeButtonLabel(opt.decision, isRedouble)
-equity: opt.equity
-equityDiff: Math.abs(bestEquity - opt.equity)
-isUserOption: opt.decision === cubeDecision
-Store the result in a local rows variable.
-Call setCubeOptions(rows); right after you compute them.
-Also call setShowResultsModal(true); so the existing ResultsModal opens for cube decisions too.
-Don’t change ResultsModal itself yet; just wire up rows and setShowResultsModal.
-When you’ve done that and clicked a cube decision, tell me what the modal shows (roughly), and we’ll clean up any remaining details there next.

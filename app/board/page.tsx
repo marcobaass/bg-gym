@@ -129,15 +129,20 @@ export default function Board({}: Props) {
     )
 
     const bestLower = best.bestAction.toLowerCase();
+    // normalize variants like "double / pass" -> "double/pass"
+    const normalizedBestLower = bestLower.replace(/\s*\/\s*/g, '/');
     let bestDecision: CubeDecision | null = null;
 
-    if (bestLower.startsWith('too good')) {
+    console.log('bestLower', bestLower);
+    console.log('best.bestAction', best.bestAction);
+
+    if (normalizedBestLower.startsWith('too good')) {
       bestDecision = 'Too good to double';      
-    } else if (bestLower.includes('no double') || bestLower.includes('no redouble')) {
+    } else if (normalizedBestLower.includes('no double') || normalizedBestLower.includes('no redouble')) {
       bestDecision = 'No Double';
-    } else if (bestLower.includes('double/take') || bestLower.includes('redouble/take')) {
+    } else if (normalizedBestLower.includes('double/take') || normalizedBestLower.includes('redouble/take')) {
       bestDecision = 'Double/Take';
-    } else if (bestLower.includes('double/pass') || bestLower.includes('redouble/pass')) {
+    } else if (normalizedBestLower.includes('double/pass') || normalizedBestLower.includes('redouble/pass')) {
       bestDecision = 'Double/Pass';
     }
 
@@ -157,6 +162,9 @@ export default function Board({}: Props) {
     const position = positionData[currentPositionIndex] ?? null
     dispatch({ type: "POSITION_CHANGED", position })
     setShowResultsModal(false)
+    setCubeDecision(null)
+    setCubeOptions([])
+    setCubePoints(0)
   }, [currentPositionIndex, positionData])
 
   const handleCheckerClick = (pointIndex: number) => {
@@ -302,6 +310,20 @@ export default function Board({}: Props) {
 
     dispatch({ type: "ADD_SCORE", score: pointsForDecision })
 
+    const rows: CubeOptionRow[] = summary.options
+      .map((opt, index) => {
+        const equityDiff = Math.abs(bestEquity - opt.equity);
+        return {
+          label: opt.decision,
+          equity: opt.equity,
+          equityDiff: equityDiff,
+          isUserOption: opt.decision === cubeDecision,
+        }
+      })
+
+    setCubeOptions(rows);
+    setShowResultsModal(true);
+
     console.log('cube summary', summary);
     console.log('bestEquity', bestEquity);
     console.log('userOption', userOption);
@@ -397,6 +419,10 @@ export default function Board({}: Props) {
         positionData={positionData}
         score={ui.score}
         totalScore={ui.totalScore}
+        cubeOptions={cubeOptions}
+        setCubeOptions={setCubeOptions}
+        cubePoints={cubePoints}
+        setCubePoints={setCubePoints}
         />
       )}
     </>

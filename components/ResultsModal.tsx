@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Move, CubeOptionRow } from '@/types/board';
+import { Move, CubeOptionRow, BestCubeAction } from '@/types/board';
 import { Position } from '@/types/board';
 
 type Props = {
@@ -12,6 +12,8 @@ type Props = {
   totalScore: number;
   cubeOptions?: CubeOptionRow[];
   cubePoints?: number;
+  setCubeOptions: (options: CubeOptionRow[]) => void;
+  setCubePoints: (points: number) => void;
 }
 
 function getMistakeColor(equityDiff: number): string {
@@ -35,7 +37,12 @@ export default function ResultsModal({
   totalScore,
   cubeOptions,
   cubePoints,
-}: Props) {  
+}: Props) {
+
+  const bestEntry = positionData[currentPositionIndex].cubeActions.find(
+    (a): a is BestCubeAction => 'bestAction' in a
+  );
+  const bestActionText = bestEntry?.bestAction;
 
   return (
     <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center">
@@ -50,9 +57,8 @@ export default function ResultsModal({
                   style={{backgroundColor: opt.isUserOption ? getMistakeColor(opt.equityDiff) : undefined                    
                   }}
                 >
-                  <p>{opt.rank}.</p>
                   <p>{opt.label}</p>
-                  <p>{(opt.equity - cubeOptions[0].equity).toFixed(3)}</p>
+                  <p>{(opt.equityDiff).toFixed(3)}</p>
                 </li>
               );
             })
@@ -71,6 +77,8 @@ export default function ResultsModal({
                   </li>
               )
           })}
+
+          {bestActionText && <p>Best Choice: {bestActionText}</p>}
 
           <div>
             <h3>Points: {cubeOptions && cubeOptions.length > 0 ? cubePoints : score}</h3>

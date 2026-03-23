@@ -9,6 +9,8 @@ import React, { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
 import clsx from 'clsx';
+import { pointsFromEquityDiff } from '@/utils/scoring-utils';
+import { buildCubeDecisionsSummary } from '@/utils/cubeDecision-utils';
 
 type Props = {
   positionData: Position | null;
@@ -18,18 +20,6 @@ type Props = {
   onCheckerClick: (pointIndex: number) => void;
   onDestinationClick: (destinationPoint: number) => void;
   userColor: Color;
-}
-
-function pointsFromEquityDiff(bestEquity: number, userEquity: number): number {
-  const equityDiff = Math.abs(bestEquity - userEquity);
-
-  if (equityDiff <= 0.02) {
-    return 6;
-  } else if (equityDiff < 0.08) {
-    return 3;
-  } else {
-    return 1;
-  }
 }
 
 export default function Board({}: Props) {
@@ -85,75 +75,6 @@ export default function Board({}: Props) {
         return `${prefix}double/Pass`;      // "Double/Pass" or "Redouble/Pass"
       case 'Too good to double':
         return isRedouble ? 'Too good to redouble' : 'Too good to double';
-    }
-  }
-
-  function normalizeAction(label: string): CubeDecision | null {
-    const lower = label.toLowerCase();
-
-    if (lower === 'no double' || lower === 'no redouble') return 'No Double';
-    if (lower === 'double/take' || lower === 'redouble/take') return 'Double/Take';
-    if (lower === 'double/pass' || lower === 'redouble/pass') return 'Double/Pass';
-
-    return null;
-  }
-
-  function buildCubeDecisionsSummary(
-    cubeActions: (CubeActions | BestCubeAction)[],
-  ): ParsedCubeDecisionSummary | null {
-    const numeric = cubeActions.filter(
-      (item): item is CubeActions => 'action' in item
-    );
-    
-    const best = cubeActions.find(
-      (item): item is BestCubeAction => 'bestAction' in item
-    );
-
-    if (!best) {
-      console.warn('No BestCubeAction found in cubeActions', cubeActions);
-      return null;
-    }
-
-    const maybeOptions = numeric.map((num) => {
-      const decision = normalizeAction(num.action);
-      if (!decision) {
-        return null;
-      }
-      return {
-        decision: decision,
-        equity: num.equity,
-      }
-    })
-    const options = maybeOptions.filter(
-      (opt): opt is ParsedCubeDecisionOption => opt !== null
-    )
-
-    const bestLower = best.bestAction.toLowerCase();
-    // normalize variants like "double / pass" -> "double/pass"
-    const normalizedBestLower = bestLower.replace(/\s*\/\s*/g, '/');
-    let bestDecision: CubeDecision | null = null;
-
-    console.log('bestLower', bestLower);
-    console.log('best.bestAction', best.bestAction);
-
-    if (normalizedBestLower.startsWith('too good')) {
-      bestDecision = 'Too good to double';      
-    } else if (normalizedBestLower.includes('no double') || normalizedBestLower.includes('no redouble')) {
-      bestDecision = 'No Double';
-    } else if (normalizedBestLower.includes('double/take') || normalizedBestLower.includes('redouble/take')) {
-      bestDecision = 'Double/Take';
-    } else if (normalizedBestLower.includes('double/pass') || normalizedBestLower.includes('redouble/pass')) {
-      bestDecision = 'Double/Pass';
-    }
-
-    if (!bestDecision) {
-      console.warn('No best decision found in cubeActions', cubeActions);
-      return null;
-    }
-
-    return {
-      bestDecision,
-      options,
     }
   }
     
@@ -375,7 +296,7 @@ export default function Board({}: Props) {
                         cubeDecision === decision
                           ? "bg-blue-600 text-white"
                             : userColor === 'White'
-                            ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            ? "bg-[#FEEAA0] text-gray-800 hover:bg-gray-300"
                               : "bg-gray-800 text-white hover:bg-gray-500"
                       )}
                     >

@@ -12,7 +12,7 @@ export type Move = {
   to: number;
 }
 
-type UIState = {
+export type UIState = {
   selectedPoint: number | null;
   availableMoves: number[];
   remainingDice: number[];

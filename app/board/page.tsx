@@ -1,28 +1,32 @@
 'use client'
 
 import BoardRenderer from '@/components/BoardRenderer';
-import { Position, Move, CubeDecision, CubeOptionRow, CubeActions, BestCubeAction, ParsedCubeDecisionSummary, CubeAction, ParsedCubeDecisionOption } from '@/types/board';
+import { Position, Move, CubeDecision, CubeOptionRow } from '@/types/board';
 import { Color } from '@/types/board';
 import { getAvailableMoves, isValidPoint } from '@/utils/move-utils';
 import { uiReducer, INITIAL_UI_STATE } from '@/utils/uiReducer';
-import React, { useState, useEffect, useReducer } from 'react'
+import { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
-import clsx from 'clsx';
 import { pointsFromEquityDiff } from '@/utils/scoring-utils';
 import { buildCubeDecisionsSummary } from '@/utils/cubeDecision-utils';
 
-type Props = {
-  positionData: Position | null;
-  selectedPoint: number | null;
-  availableMoves: number[];
-  remainingDice: number[];
-  onCheckerClick: (pointIndex: number) => void;
-  onDestinationClick: (destinationPoint: number) => void;
-  userColor: Color;
-}
+import useBoardDestinationClick from './_hooks/useBoardDestinationClick';
 
-export default function Board({}: Props) {
+import PositionHeader from '@/components/board/trainer/PositionHeader';
+import NavigationControls from '@/components/board/trainer/NavigationControls';
+import CubeDecisionButtons from '@/components/board/trainer/CubeDecisionButtons';
+import SubmitButton from '@/components/board/trainer/SubmitButton';
+import useBoardSubmitCubeDecision from './_hooks/useBoardSubmitCubeDecision';
+
+const cubeDecisions: CubeDecision[] = [
+  'No Double',
+  'Double/Take',
+  'Double/Pass',
+  'Too good to double'
+];
+
+export default function Board({}) {
 
   const [positionData] = useState<Position[]>(() => {
     try {
@@ -53,30 +57,8 @@ export default function Board({}: Props) {
   const current = positionData[currentPositionIndex] ?? null
   const isRedouble = current ? current.cubeOwner !== 'none' : false
 
-  const cubeDecisions: CubeDecision[] = [
-    'No Double',
-    'Double/Take',
-    'Double/Pass',
-    'Too good to double'
-  ];
-
   const [cubeOptions, setCubeOptions] = useState<CubeOptionRow[]>([])
   const [cubePoints, setCubePoints] = useState<number>(0)
-
-  function getCubeButtonLabel(decision: CubeDecision, isRedouble: boolean):string {
-    const prefix = isRedouble ? 'Re' : ''
-
-    switch (decision) {
-      case 'No Double':
-        return isRedouble ? 'No redouble' : 'No double';
-      case 'Double/Take':
-        return `${prefix}double/Take`;      // "Double/Take" or "Redouble/Take"
-      case 'Double/Pass':
-        return `${prefix}double/Pass`;      // "Double/Pass" or "Redouble/Pass"
-      case 'Too good to double':
-        return isRedouble ? 'Too good to redouble' : 'Too good to double';
-    }
-  }
     
   // When the Position changes get new "position" from positionData
   useEffect(() => {
@@ -107,45 +89,7 @@ export default function Board({}: Props) {
     }
   }
 
-
-
-  const handleDestinationClick = (destinationPoint: number) => {
-    if (ui.selectedPoint === null || !ui.currentPosition) return
-
-    // distance diffrent when from bar
-    let distance = 0
-    if (ui.selectedPoint === -1) {
-      distance = 24 - destinationPoint
-    } else if (ui.selectedPoint === -2) {
-      distance = destinationPoint + 1
-    } else {
-      distance = Math.abs(destinationPoint - ui.selectedPoint)
-    }
-
-    console.log("ui.selectedPoint: ", ui.selectedPoint);
-    console.log("distance: ", distance);
-
-
-    // find used die in array
-    const dieIndex = ui.remainingDice.findIndex(die => die === distance)
-
-    // new Array with unused dies before and after used one
-    const newDice = [
-      ...ui.remainingDice.slice(0, dieIndex),
-      ...ui.remainingDice.slice(dieIndex + 1)
-    ]
-
-    dispatch({ type: 'SET_DICE', dice: newDice})
-
-    // Move the checker
-    console.log(destinationPoint);
-
-    dispatch({ type: 'MOVE_CHECKER', from: ui.selectedPoint, to: destinationPoint })
-
-    // Clear selection
-    dispatch( {type: 'SELECT_POINT', point: null})
-    dispatch({type: 'SET_MOVES', moves: []})
-  }
+  const { handleDestinationClick } = useBoardDestinationClick({ ui, dispatch })
 
 
   const handleSubmitMove = () => {
@@ -174,148 +118,43 @@ export default function Board({}: Props) {
     }
   }
 
-  const handleSubmitCubeDecision = () => {
-    if (positionData[currentPositionIndex].analysisType !== 'Cube') {
-      throw new Error('This is not a cube position');
-    }
+  const { handleSubmitCubeDecision } = useBoardSubmitCubeDecision({
+    positionData,
+    currentPositionIndex,
+    cubeDecision,
+    setCubePoints,
+    setCubeOptions,
+    setShowResultsModal,
+    dispatch,
+  })
 
-    const cubeActions = positionData[currentPositionIndex].cubeActions;
-
-    const summary = buildCubeDecisionsSummary(cubeActions);
-
-    if (!summary) {
-      console.warn('No summary found for cube decisions', cubeActions);
-      return;
-    }
-
-    if (!cubeDecision) {
-      console.warn('No cube decision selected');
-      return;
-    }
-
-    if (cubeDecision === 'Too good to double' && summary.bestDecision !== 'Too good to double') {
-      const pointsForDecision = 1;
-
-      setCubePoints(pointsForDecision);
-      dispatch({ type: "ADD_SCORE", score: pointsForDecision });
-
-      console.log('cube summary', summary);
-      console.log('cubeDecision', cubeDecision, 'but bestDecision is', summary.bestDecision);
-      console.log('pointsForDecision', pointsForDecision);
-
-      return;
-    }
-
-    const bestOption = summary.options.find(
-      (opt) => opt.decision === summary.bestDecision
-    );
-
-    if (!bestOption) {
-      console.warn('Best option not found in summary', summary.options);
-      return;
-    }
-
-    const bestEquity = bestOption.equity;
-
-    const userOption = summary.options.find(opt => opt.decision === cubeDecision);
-
-    if (!userOption) {
-      console.warn('User option not found in summary', summary.options);
-      return;
-    }
-
-    const userEquity = userOption.equity;
-    const pointsForDecision = pointsFromEquityDiff(bestEquity, userEquity);
-
-    setCubePoints(pointsForDecision);
-
-    dispatch({ type: "ADD_SCORE", score: pointsForDecision })
-
-    const rows: CubeOptionRow[] = summary.options
-      .map((opt, index) => {
-        const equityDiff = Math.abs(bestEquity - opt.equity);
-        return {
-          label: opt.decision,
-          equity: opt.equity,
-          equityDiff: equityDiff,
-          isUserOption: opt.decision === cubeDecision,
-        }
-      })
-
-    setCubeOptions(rows);
-    setShowResultsModal(true);
-
-    console.log('cube summary', summary);
-    console.log('bestEquity', bestEquity);
-    console.log('userOption', userOption);
-    console.log('pointsForDecision', pointsForDecision);
-  }
-
-
+  const isCubePosition = current?.analysisType === 'Cube'
 
   return (
     <>
-      <div>Welcome to the Training</div>
+      <div className="text-center mb-4 text-2xl font-bold">Welcome to the Training</div>
 
       {positionData.length > 0 ? (
         <>
           <div className="text-center mb-4">
-            <div className="text-lg font-semibold mb-2">
-              Position {currentPositionIndex + 1} of {positionData.length}
-            </div>
-
-            {/* Navigation */}
-            <div className="space-x-2 mt-2">
-              <button
-                onClick={() => setCurrentPositionIndex(Math.max(0, currentPositionIndex - 1))}
-                disabled={currentPositionIndex === 0}
-                className="px-4 py-2 bg-indigo-600 text-white rounded disabled:bg-gray-400"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPositionIndex(Math.min(positionData.length - 1, currentPositionIndex + 1))}
-                disabled={currentPositionIndex === positionData.length - 1}
-                className="px-4 py-2 bg-indigo-600 text-white rounded disabled:bg-gray-400"
-              >
-                Next
-              </button>
-            </div>
-
+            <PositionHeader currentPositionIndex={currentPositionIndex} positionData={positionData} />
+            <NavigationControls currentPositionIndex={currentPositionIndex} positionData={positionData} setCurrentPositionIndex={setCurrentPositionIndex} />
             <div className="flex items-center justify-center gap-2">
-              {/* Cube decision buttons */}
-              {positionData[currentPositionIndex].analysisType === 'Cube' && (
-                <>
-                  {cubeDecisions.map((decision) => (
-                    <button
-                      key={decision}
-                      type="button"
-                      onClick={() => setCubeDecision(decision)}
-                      className={clsx(
-                        "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
-                        cubeDecision === decision
-                          ? "bg-blue-600 text-white"
-                            : userColor === 'White'
-                            ? "bg-[#FEEAA0] text-gray-800 hover:bg-gray-300"
-                              : "bg-gray-800 text-white hover:bg-gray-500"
-                      )}
-                    >
-                      {getCubeButtonLabel(decision, isRedouble)}
-                    </button>
-                  ))}
-                </>
-              )}
-              
-              {/* Submit button */}
-              <button
-                onClick={current?.analysisType === 'Move' ? handleSubmitMove : handleSubmitCubeDecision}
+              <CubeDecisionButtons
+                isCubePosition={isCubePosition}
+                cubeDecisions={cubeDecisions}
+                setCubeDecision={setCubeDecision}
+                cubeDecision={cubeDecision}
+                userColor={userColor}
+                isRedouble={isRedouble}
+              />
+              <SubmitButton
+                current={current}
+                handleSubmitMove={handleSubmitMove}
+                handleSubmitCubeDecision={handleSubmitCubeDecision}
                 disabled={ui.remainingDice.length > 0}
-                className="mt-4 px-6 py-2 bg-green-600 text-white rounded disabled:bg-gray-400"
-              >
-                Submit Move
-              </button>
+              />
             </div>
-
 
           </div>
 

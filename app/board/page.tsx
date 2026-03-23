@@ -374,7 +374,9 @@ export default function Board({}: Props) {
                         "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
                         cubeDecision === decision
                           ? "bg-blue-600 text-white"
-                          : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            : userColor === 'White'
+                            ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                              : "bg-gray-800 text-white hover:bg-gray-500"
                       )}
                     >
                       {getCubeButtonLabel(decision, isRedouble)}

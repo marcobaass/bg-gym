@@ -64,11 +64,24 @@ export default function Board({}) {
   useEffect(() => {
     const position = positionData[currentPositionIndex] ?? null
     dispatch({ type: "POSITION_CHANGED", position })
+    
+  }, [currentPositionIndex, positionData])
+
+  const handlePreviousPosition = () => {
     setShowResultsModal(false)
     setCubeDecision(null)
     setCubeOptions([])
     setCubePoints(0)
-  }, [currentPositionIndex, positionData])
+    setCurrentPositionIndex(Math.max(0, currentPositionIndex - 1))
+  }
+
+  const handleNextPosition = () => {
+    setShowResultsModal(false)
+    setCubeDecision(null)
+    setCubeOptions([])
+    setCubePoints(0)
+    setCurrentPositionIndex(Math.min(positionData.length - 1, currentPositionIndex + 1))
+  }
 
   const handleCheckerClick = (pointIndex: number) => {
     console.log(`Clicked checker on point ${pointIndex + 1}`)
@@ -138,7 +151,12 @@ export default function Board({}) {
         <>
           <div className="text-center mb-4">
             <PositionHeader currentPositionIndex={currentPositionIndex} positionData={positionData} />
-            <NavigationControls currentPositionIndex={currentPositionIndex} positionData={positionData} setCurrentPositionIndex={setCurrentPositionIndex} />
+            <NavigationControls
+              onPrevious={handlePreviousPosition}
+              onNext={handleNextPosition}
+              canGoPrevious={currentPositionIndex > 0}
+              canGoNext={currentPositionIndex < positionData.length - 1}
+            />
             <div className="flex items-center justify-center gap-2">
               <CubeDecisionButtons
                 isCubePosition={isCubePosition}
@@ -158,14 +176,28 @@ export default function Board({}) {
 
           </div>
 
-          <BoardRenderer
-            positionData={ui.currentPosition}
-            selectedPoint={ui.selectedPoint}
-            availableMoves={ui.availableMoves}
-            remainingDice={ui.remainingDice}
-            onCheckerClick={handleCheckerClick}
-            onDestinationClick={handleDestinationClick}
-          />
+          <div className="relative">
+            <BoardRenderer
+              positionData={ui.currentPosition}
+              selectedPoint={ui.selectedPoint}
+              availableMoves={ui.availableMoves}
+              remainingDice={ui.remainingDice}
+              onCheckerClick={handleCheckerClick}
+              onDestinationClick={handleDestinationClick}
+            />
+            {
+              current?.analysisType === "Move" && (
+                <button
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 enabled:bg-white disabled:bg-gray-300 text-black px-4 py-2 rounded-md border border-black enabled:hover:bg-green-100"
+                  onClick={() => dispatch({ type: 'UNDO_MOVE' })}
+                  disabled={ui.moveHistory.length === 0}            
+                >
+                  Undo
+                </button>
+              )
+            }
+          </div>
+
 
 
         </>

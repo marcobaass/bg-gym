@@ -20,6 +20,7 @@ export type UIState = {
   moves: Move[];
   score: number;
   totalScore: number;
+  moveHistory: MoveHistoryEntry[];
 };
 
 type Action =
@@ -27,8 +28,9 @@ type Action =
   | { type: "SELECT_POINT"; point: number | null }
   | { type: "SET_MOVES"; moves: number[] }
   | { type: "SET_DICE"; dice: number[] }
-  | { type: "MOVE_CHECKER"; from: number; to: number }
   | { type: "ADD_SCORE"; score: number }
+  | { type: "APPLY_MOVE"; from: number; to: number , newDice: number[], historyEntry: MoveHistoryEntry}
+  | { type: "UNDO_MOVE"}
 
 /**
  * Constants & Initial State
@@ -40,8 +42,20 @@ export const INITIAL_UI_STATE: UIState = {
   currentPosition: null,
   moves: [],
   score: 0,
-  totalScore: 0
+  totalScore: 0,
+  moveHistory: []
 };
+
+/** 
+ * Undo State Management
+ */
+export type MoveHistoryEntry = {
+  prevCurrentPosition: Position | null;
+  prevRemainingDice: number[];
+  prevSelectedPoint: number | null;
+  prevAvailableMoves: number[];
+  prevMoves: Move[];
+}
 
 /**
  * Reducer: Manages the UI interaction state
@@ -56,7 +70,8 @@ export function uiReducer(state: UIState, action: Action): UIState {
         currentPosition: action.position,
         moves: [],
         score: 0,
-        totalScore: state.totalScore
+        totalScore: state.totalScore,
+        moveHistory: []
       }
     case "SELECT_POINT":
       return { ...state, selectedPoint: action.point }
@@ -66,7 +81,9 @@ export function uiReducer(state: UIState, action: Action): UIState {
       return { ...state, remainingDice: action.dice }
     case "ADD_SCORE":
       return { ...state, score: action.score, totalScore: state.totalScore + action.score }
-    case "MOVE_CHECKER":
+    
+    // Apply a move to the current position
+    case "APPLY_MOVE": {
       if (!state.currentPosition) return state
 
       const updatedPosition = { ...state.currentPosition }
@@ -132,8 +149,26 @@ export function uiReducer(state: UIState, action: Action): UIState {
       return {
         ...state,
         currentPosition: updatedPosition,
-        moves: [...state.moves, { from: action.from, to: action.to }]
+        moves: [...state.moves, { from: action.from, to: action.to }],
+        moveHistory: [...state.moveHistory, action.historyEntry],
+        remainingDice: action.newDice,
+        selectedPoint: null,
+        availableMoves: [],
       }
+    }
+    case "UNDO_MOVE": {
+      if (state.moveHistory.length === 0) return state
+      const lastMove = state.moveHistory[state.moveHistory.length - 1]
+      return {
+        ...state,
+        currentPosition: lastMove.prevCurrentPosition,
+        remainingDice: lastMove.prevRemainingDice,
+        selectedPoint: lastMove.prevSelectedPoint,
+        availableMoves: lastMove.prevAvailableMoves,
+        moves: lastMove.prevMoves,
+        moveHistory: state.moveHistory.slice(0, -1),
+      }
+    }
     default:
       return state
   }

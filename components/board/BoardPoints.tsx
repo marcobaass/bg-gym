@@ -13,8 +13,6 @@ type Props = {
 }
 
 export default function BoardPoints({ boardConfig, positionData, calculatedDimensions, children }: Props) {
-  const playerToPlay = positionData?.playerToPlay;
-
   const {
     BOARD_WIDTH,
     BOARD_HEIGHT,
@@ -27,6 +25,32 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
   const FRAME_WIDTH = boardConfig.FRAME_WIDTH;
   const FRAME_WIDTH_X = boardConfig.FRAME_WIDTH_X;
 
+  function getPointStartXRelative(
+    i: number,
+    boardWidth: number,
+    pointWidth: number,
+    barXStartRelative: number,
+    barWidth: number
+  ) {
+    if (i >= 1 && i <= 6) {
+      return boardWidth - (i * pointWidth); // bottom-right
+    }
+    if (i >= 7 && i <= 12) {
+      const pointIndex = i - 7;
+      return (5 - pointIndex) * pointWidth; // bottom-left
+    }
+    if (i >= 13 && i <= 18) {
+      const pointIndex = i -13;
+      return pointIndex * pointWidth; // top-left
+    }
+    if (i >= 19 && i <= 24) {
+      const pointIndex = i - 19;
+      const quadrantStart = barXStartRelative + barWidth;
+      return quadrantStart + (pointIndex * pointWidth); // top-right
+    }
+    throw new Error(`Invalid point index: ${i}`);
+  }
+
   return (
     <div className="w-4/5 aspect-5/3 mx-auto relative">
         {positionData ? (
@@ -38,32 +62,15 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
             // Width of the playing area on one side of the bar (e.g., left half)
             const HALF_BOARD_WIDTH = BOARD_WIDTH / 2 - BAR_WIDTH / 2;
 
-            const pointsToDraw = [];
-            const labelsToDraw = [];
+            const pointsToDraw: React.ReactNode[] = [];
+            const labelsToDraw: React.ReactNode[] = [];            
 
             // Loop for drawing the 24 points (triangles)
             for (let i = 1; i <=24; i++) {
               const isTop = i >= 13;
-              let X_start_relative = 0; // X position relative to the BOARD_WIDTH area (0 to 960)
-
-              // Determine the relative X starting position based on the quadrant
-              if (i >= 1 && i <= 6) {
-                // Quadrant 1 (Bottom Right): Points 1-6
-                X_start_relative = BOARD_WIDTH - (i * POINT_WIDTH);
-              } else if (i >= 7 && i <= 12) {
-                // Quadrant 2 (Bottom Left): Points 7-12 (before the bar)
-                const pointIndex = i - 7; // 0 to 5
-                X_start_relative = (5 - pointIndex) * POINT_WIDTH;
-              } else if (i >= 13 && i <= 18) {
-                // Quadrant 3 (Top Left): Points 13-18
-                const pointIndex = i - 13; // 0 to 5
-                X_start_relative = pointIndex * POINT_WIDTH;
-              } else if (i >= 19 && i <= 24) {
-                // Quadrant 4 (Top Right): Points 19-24 (after the bar)
-                const quadrantStart = BAR_X_START_RELATIVE + BAR_WIDTH;
-                const pointIndex = i - 19; // 0 to 5
-                X_start_relative = quadrantStart + (pointIndex * POINT_WIDTH);
-              }
+              const X_start_relative = getPointStartXRelative(
+                i, BOARD_WIDTH, POINT_WIDTH, BAR_X_START_RELATIVE, BAR_WIDTH
+              );
 
               // 1. Y coordinates are offset by FRAME_WIDTH
               const Y1 = isTop ? FRAME_WIDTH : svgHeight - FRAME_WIDTH;
@@ -89,9 +96,10 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
               );
 
               const labelY = isTop ? Y1 -4 : Y1 + 12;
+              const labelText = positionData.playerToPlay === 'White' ?  i : 25-i;
               labelsToDraw.push(
                 <text key={`L${i}`} x={X2} y={labelY} textAnchor="middle" fill="white" fontSize="12">
-                  {positionData.playerToPlay === 'White' ?  i : 25-i}
+                  {labelText}
                 </text>
               );
             }
@@ -138,11 +146,6 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
                   {pointsToDraw}
 
                   {children}
-
-                  {/* Text position, offset by FRAME_WIDTH */}
-                  <text x={FRAME_WIDTH + 10} y={FRAME_WIDTH + 20} fill="black" fontSize="16">
-                      Board Loaded. Size: {Math.round(BOARD_WIDTH)}x{Math.round(BOARD_HEIGHT)}
-                  </text>
 
                   {labelsToDraw}
               </svg>

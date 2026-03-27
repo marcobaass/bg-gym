@@ -13,6 +13,7 @@ type Props = {
 }
 
 export default function BoardPoints({ boardConfig, positionData, calculatedDimensions, children }: Props) {
+  const playerToPlay = positionData?.playerToPlay;
 
   const {
     BOARD_WIDTH,
@@ -38,6 +39,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
             const HALF_BOARD_WIDTH = BOARD_WIDTH / 2 - BAR_WIDTH / 2;
 
             const pointsToDraw = [];
+            const labelsToDraw = [];
 
             // Loop for drawing the 24 points (triangles)
             for (let i = 1; i <=24; i++) {
@@ -51,7 +53,7 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
               } else if (i >= 7 && i <= 12) {
                 // Quadrant 2 (Bottom Left): Points 7-12 (before the bar)
                 const pointIndex = i - 7; // 0 to 5
-                X_start_relative = pointIndex * POINT_WIDTH;
+                X_start_relative = (5 - pointIndex) * POINT_WIDTH;
               } else if (i >= 13 && i <= 18) {
                 // Quadrant 3 (Top Left): Points 13-18
                 const pointIndex = i - 13; // 0 to 5
@@ -84,6 +86,13 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
                   stroke="black"
                   strokeWidth="1"
                 />
+              );
+
+              const labelY = isTop ? Y1 -4 : Y1 + 12;
+              labelsToDraw.push(
+                <text key={`L${i}`} x={X2} y={labelY} textAnchor="middle" fill="white" fontSize="12">
+                  {positionData.playerToPlay === 'White' ?  i : 25-i}
+                </text>
               );
             }
 
@@ -134,6 +143,8 @@ export default function BoardPoints({ boardConfig, positionData, calculatedDimen
                   <text x={FRAME_WIDTH + 10} y={FRAME_WIDTH + 20} fill="black" fontSize="16">
                       Board Loaded. Size: {Math.round(BOARD_WIDTH)}x{Math.round(BOARD_HEIGHT)}
                   </text>
+
+                  {labelsToDraw}
               </svg>
             )
           })()}

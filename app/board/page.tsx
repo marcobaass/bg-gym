@@ -188,7 +188,7 @@ export default function Board({}) {
             {
               current?.analysisType === "Move" && (
                 <button
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 enabled:bg-white disabled:bg-gray-300 text-black px-4 py-2 rounded-md border border-black enabled:hover:bg-green-100"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-1 enabled:bg-white disabled:bg-gray-300 text-black px-4 py-2 rounded-md border border-black enabled:hover:bg-green-100"
                   onClick={() => dispatch({ type: 'UNDO_MOVE' })}
                   disabled={ui.moveHistory.length === 0}            
                 >
@@ -217,6 +217,7 @@ export default function Board({}) {
         setCubeOptions={setCubeOptions}
         cubePoints={cubePoints}
         setCubePoints={setCubePoints}
+        handleNextPosition={handleNextPosition}
         />
       )}
     </>

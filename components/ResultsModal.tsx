@@ -14,6 +14,7 @@ type Props = {
   cubePoints?: number;
   setCubeOptions: (options: CubeOptionRow[]) => void;
   setCubePoints: (points: number) => void;
+  handleNextPosition: () => void;
 }
 
 function getMistakeColor(equityDiff: number): string {
@@ -31,12 +32,12 @@ export default function ResultsModal({
   result,
   bestMoves,
   currentPositionIndex,
-  setCurrentPositionIndex,
   positionData,
   score,
   totalScore,
   cubeOptions,
   cubePoints,
+  handleNextPosition,
 }: Props) {
 
   const bestEntry = positionData[currentPositionIndex].cubeActions.find(
@@ -45,7 +46,7 @@ export default function ResultsModal({
   const bestActionText = bestEntry?.bestAction;
 
   return (
-    <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center">
+    <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-10">
         <div className="bg-white/25 backdrop-blur-sm p-8 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold mb-4">Results</h2>
             {cubeOptions && cubeOptions.length > 0
@@ -85,7 +86,7 @@ export default function ResultsModal({
             <h3>Score: {totalScore}</h3>
             <button
               onClick={() => {
-                setCurrentPositionIndex(Math.min(positionData.length - 1, currentPositionIndex + 1))
+                handleNextPosition()
               }}
               disabled={currentPositionIndex === positionData.length - 1}
               className="px-4 py-2 bg-indigo-600 text-white rounded disabled:bg-gray-400"

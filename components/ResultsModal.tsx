@@ -1,4 +1,3 @@
-import React, { useState } from 'react'
 import { Move, CubeOptionRow, BestCubeAction } from '@/types/board';
 import { Position } from '@/types/board';
 

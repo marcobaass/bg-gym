@@ -1,5 +1,8 @@
+import { getLastCategoryId, isCategoryNameTaken, loadUserLibrary, saveUserLibrary, setLastCategoryId } from '@/utils/userLibrary';
 import { createBoardStateFromXgid } from '@/utils/xgid-parser';
 import React, { useState } from 'react'
+
+const SENTINEL = "__CREATE_NEW_CATEGORY__"
 
 
 export default function ParserInput() {
@@ -8,6 +11,19 @@ export default function ParserInput() {
   const[error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [activeTab, setActiveTab] = useState('Move')
+
+  const [categoryId, setCategoryId] = useState(() => {
+    if (typeof window === "undefined") return SENTINEL
+    const lastId = getLastCategoryId()
+    const initialFolders = loadUserLibrary().library
+    const exists = lastId ? initialFolders.find((folder) => folder.category.id === lastId) : null
+    return exists ? exists.category.id : SENTINEL
+  })
+
+  const [newCategoryName, setNewCategoryName] = useState("")
+
+  const folders = loadUserLibrary().library
+  const sortedFolders = [...folders].sort((a, b) => a.category.name.localeCompare(b.category.name))
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,15 +50,42 @@ export default function ParserInput() {
         return
       }
 
-      console.log(positionData)
       if (positionData.analysisType === 'Cube' || positionData.analysisType === 'Move') {
-        console.log('Success');
+        const userLibrary = loadUserLibrary()
+        if (categoryId === SENTINEL) {
+          const newCategoryNameTrimmed: string = newCategoryName.trim()
+          if (newCategoryNameTrimmed.length === 0) {
+            setError("Category name cannot be empty")
+            return
+          }
+          if (isCategoryNameTaken(userLibrary.library.map(category => category.category), newCategoryNameTrimmed)) {
+            setError("Category name already taken")
+            return
+          }
 
-        let showList = [];
-        const show = positionData;
-        showList.push(show);
-        showList = showList.concat(JSON.parse(localStorage.getItem('showList')||'[]'));
-        localStorage.setItem("showList", JSON.stringify(showList));
+          const newId = crypto.randomUUID()
+          userLibrary.library.push({
+            category: {
+              id: newId,
+              name: newCategoryNameTrimmed,
+            },
+            positions: [positionData],
+          })
+          setLastCategoryId(newId)
+          saveUserLibrary(userLibrary)
+          setNewCategoryName("")
+          setCategoryId(newId)
+        } else {
+          const category = userLibrary.library.find((category) => category.category.id === categoryId)
+          if (category) {
+            category.positions.push(positionData)
+            setLastCategoryId(categoryId)
+            saveUserLibrary(userLibrary)
+          } else {
+            setError("Category not found")
+            return
+          }
+        }
 
         setXgidValue("")
         setError("")
@@ -122,6 +165,26 @@ export default function ParserInput() {
                 `}
                 placeholder="Paste XG Position here ..."
               ></textarea>
+
+              {/* Dropdown for category selection */}
+              <label htmlFor="categorySelect">
+                <span className="block mb-2 text-sm font-medium text-gray-700">
+                  Category
+                </span>
+              </label>
+              <select id="categorySelect" className="w-full border border-gray-300 p-3 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:outline-none transition duration-150 ease-in-out mb-4 focus:ring-indigo-500 focus:border-indigo-500" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                <option value={SENTINEL}>Create new category</option>
+                {sortedFolders.map((category) => {
+                  return (
+                    <option key={category.category.id} value={category.category.id}>
+                      {category.category.name}
+                    </option>
+                  )
+                })}
+              </select>
+              {categoryId === SENTINEL && (
+                <input type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="w-full border border-gray-300 p-3 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:outline-none transition duration-150 ease-in-out mb-4 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter new category name" />
+              )}
 
               {error && (
                 <p className="text-red-600 text-sm mt-2">{error}</p>

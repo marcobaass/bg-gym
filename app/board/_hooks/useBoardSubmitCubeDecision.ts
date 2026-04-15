@@ -81,7 +81,7 @@ export default function useBoardSubmitCubeDecision({
         dispatch({ type: "ADD_SCORE", score: pointsForDecision })
     
         const rows: CubeOptionRow[] = summary.options
-          .map((opt, index) => {
+          .map((opt) => {
             const equityDiff = Math.abs(bestEquity - opt.equity);
             return {
               label: opt.decision,

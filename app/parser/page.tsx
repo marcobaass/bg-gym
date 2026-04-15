@@ -3,7 +3,7 @@
 import ParserInput from '@/components/ParserInput'
 import React from 'react'
 
-type Props = {}
+type Props = object
 
 export default function page({}: Props) {
   return (

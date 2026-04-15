@@ -9,7 +9,7 @@ import { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
 import { pointsFromEquityDiff } from '@/utils/scoring-utils';
-import { buildCubeDecisionsSummary } from '@/utils/cubeDecision-utils';
+import { loadUserLibrary } from '@/utils/userLibrary';
 
 import useBoardDestinationClick from './_hooks/useBoardDestinationClick';
 
@@ -27,21 +27,10 @@ const cubeDecisions: CubeDecision[] = [
 ];
 
 export default function Board({}) {
-
+  
   const [positionData] = useState<Position[]>(() => {
-    try {
-      const showListString = localStorage.getItem("showList");
-      if (showListString) {
-        const parsedData: Position[] = JSON.parse(showListString)
-        return parsedData
-      } else {
-        console.log("No 'showList' data found in localStorage.");
-        return []
-      }
-    } catch(error) {
-      console.error("Error accessing or parsing localStorage data:", error);
-      return []
-    }
+    const userLibrary = loadUserLibrary();
+    return userLibrary.library.flatMap((category) => category.positions);
   });
 
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0)

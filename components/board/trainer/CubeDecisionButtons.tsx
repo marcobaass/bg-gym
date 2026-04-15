@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Color, Position } from "@/types/board";
+import { Color } from "@/types/board";
 import { CubeDecision } from "@/types/board";
 
 

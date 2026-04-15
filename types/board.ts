@@ -46,6 +46,30 @@ export interface BestCubeAction {
   bestAction: string;
 }
 
+export type CubeDecision =
+  | 'No Double'
+  | 'Double/Take'
+  | 'Double/Pass'
+  | 'Too good to double';
+  
+export interface ParsedCubeDecisionOption {
+  decision: CubeDecision;
+  equity: number;
+}
+
+export interface ParsedCubeDecisionSummary {
+  bestDecision: CubeDecision;
+  options: ParsedCubeDecisionOption[];
+}
+
+export type CubeOptionRow = {
+  rank?: number;
+  label: string;
+  equity: number;
+  equityDiff: number;
+  isUserOption: boolean;
+}
+
 export interface Position {
   analysisType: string;
   barWhite: number;
@@ -67,34 +91,16 @@ export interface Position {
   blackOff: number;
 }
 
-export type CubeDecision =
-  | 'No Double'
-  | 'Double/Take'
-  | 'Double/Pass'
-  | 'Too good to double';
-  
-export interface ParsedCubeDecisionOption {
-  decision: CubeDecision;
-  equity: number;
+export interface Category {
+  name: string;
+  id: string;
 }
 
-export interface ParsedCubeDecisionSummary {
-  bestDecision: CubeDecision;
-  options: ParsedCubeDecisionOption[];
+export interface PositionCategory {
+  positions: Position[];
+  category: Category;
 }
 
-type CubeResult = {
-  bestDecision: CubeDecision;
-  userDecision: CubeDecision;
-  bestEquity: number;
-  userEquity: number;
-  points: number;
-};
-
-export type CubeOptionRow = {
-  rank?: number;
-  label: string;
-  equity: number;
-  equityDiff: number;
-  isUserOption: boolean;
+export type UserLibrary = {
+  library: PositionCategory[];
 }

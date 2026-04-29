@@ -1,4 +1,4 @@
-import { Category, UserLibrary } from "@/types/board";
+import { Category, Position, UserLibrary } from "@/types/board";
 
 export function isCategoryNameTaken(userCategories: Category[], name: string) {
     const inputName = name.toLowerCase().trim();
@@ -71,4 +71,14 @@ export function setLastCategoryId(categoryId: string): void {
 export function clearLastCategoryId(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem(LAST_CATEGORY_STORAGE_KEY);
+}
+
+export function shufflePositions(positions: Position[]): Position[] {
+    for (let i = positions.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        const temp = positions[i];
+        positions[i] = positions[j];
+        positions[j] = temp;   
+    }
+    return positions;
 }

@@ -9,7 +9,8 @@ import { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
 import { pointsFromEquityDiff } from '@/utils/scoring-utils';
-import { loadUserLibrary } from '@/utils/userLibrary';
+import { loadUserLibrary, shufflePositions } from '@/utils/userLibrary';
+import { useSearchParams } from 'next/navigation';
 
 import useBoardDestinationClick from './_hooks/useBoardDestinationClick';
 
@@ -18,6 +19,8 @@ import NavigationControls from '@/components/board/trainer/NavigationControls';
 import CubeDecisionButtons from '@/components/board/trainer/CubeDecisionButtons';
 import SubmitButton from '@/components/board/trainer/SubmitButton';
 import useBoardSubmitCubeDecision from './_hooks/useBoardSubmitCubeDecision';
+
+
 
 const cubeDecisions: CubeDecision[] = [
   'No Double',
@@ -28,9 +31,17 @@ const cubeDecisions: CubeDecision[] = [
 
 export default function Board({}) {
   
+  const searchParams = useSearchParams();
+  const searchParamsCategoryId = searchParams.get('categoryId');
+  console.log("Search params categoryId:", searchParamsCategoryId);
+
   const [positionData] = useState<Position[]>(() => {
     const userLibrary = loadUserLibrary();
-    return userLibrary.library.flatMap((category) => category.positions);
+    const categoryPositions = userLibrary.library.find((category) => category.category.id === searchParamsCategoryId)?.positions ?? [];
+    const shuffled = [...categoryPositions]
+
+    const shuffledPositions = shufflePositions(shuffled);
+    return shuffledPositions;
   });
 
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0)
@@ -48,6 +59,7 @@ export default function Board({}) {
 
   const [cubeOptions, setCubeOptions] = useState<CubeOptionRow[]>([])
   const [cubePoints, setCubePoints] = useState<number>(0)
+
     
   // When the Position changes get new "position" from positionData
   useEffect(() => {

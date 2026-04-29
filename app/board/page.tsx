@@ -1,7 +1,7 @@
 'use client'
 
 import BoardRenderer from '@/components/BoardRenderer';
-import { Position, Move, CubeDecision, CubeOptionRow } from '@/types/board';
+import { Position, Move, CubeDecision, CubeOptionRow, CategorySession } from '@/types/board';
 import { Color } from '@/types/board';
 import { getAvailableMoves, isValidPoint } from '@/utils/move-utils';
 import { uiReducer, INITIAL_UI_STATE } from '@/utils/uiReducer';
@@ -9,7 +9,7 @@ import { useState, useEffect, useReducer } from 'react'
 import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
 import { pointsFromEquityDiff } from '@/utils/scoring-utils';
-import { loadUserLibrary, shufflePositions } from '@/utils/userLibrary';
+import { loadUserLibrary, saveCategorySession, shufflePositions } from '@/utils/userLibrary';
 import { useSearchParams } from 'next/navigation';
 
 import useBoardDestinationClick from './_hooks/useBoardDestinationClick';
@@ -114,22 +114,41 @@ export default function Board({}) {
       
       const comparisonResult = compareWithBestMoves(userMoves, bestMoves, userColor as Color)
 
-      let pointsForMove: number
-        if (comparisonResult === undefined) {
-          // User's move is not in bestMoves at all → 0 points
-          pointsForMove = 0
-        } else {
-          const bestEquity = bestMoves[0]?.equity ?? 0
-          const userEquity = comparisonResult.equity ?? 0
-          pointsForMove = pointsFromEquityDiff(bestEquity, userEquity)
-        }
+      const positionsPlayed = positionData.length;
 
+      let pointsForMove: number
+      if (comparisonResult === undefined) {
+        // User's move is not in bestMoves at all → 0 points
+        pointsForMove = 0
+      } else {
+        const bestEquity = bestMoves[0]?.equity ?? 0
+        const userEquity = comparisonResult.equity ?? 0
+        pointsForMove = pointsFromEquityDiff(bestEquity, userEquity)
+      }
+      
+      const nextTotalScore = ui.totalScore + pointsForMove;
+      
+      if (positionsPlayed === currentPositionIndex + 1) {
+        const categorySession: CategorySession = {
+          id: crypto.randomUUID(),
+          categoryId: searchParamsCategoryId ?? '',
+          finishedAt: Date.now(),
+          positionsPlayed: positionsPlayed,
+          rawTotalScore: nextTotalScore,
+          scorePerPosition: positionsPlayed > 0 ? nextTotalScore / positionData.length : 0,
+        }
+        if (searchParamsCategoryId) {
+          saveCategorySession(categorySession);
+        }
+        
+      }
+      
       dispatch({ type: "ADD_SCORE", score: pointsForMove })      
       setResult(comparisonResult as Move);
       setShowResultsModal(true);
     } catch (error) {
       console.error('Error in handleSubmitMove:', error);
-    }
+    }    
   }
 
   const { handleSubmitCubeDecision } = useBoardSubmitCubeDecision({

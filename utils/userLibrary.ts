@@ -1,4 +1,4 @@
-import { Category, Position, UserLibrary } from "@/types/board";
+import { Category, CategorySession, Position, SessionsByCategory, UserLibrary } from "@/types/board";
 
 export function isCategoryNameTaken(userCategories: Category[], name: string) {
     const inputName = name.toLowerCase().trim();
@@ -81,4 +81,73 @@ export function shufflePositions(positions: Position[]): Position[] {
         positions[j] = temp;   
     }
     return positions;
+}
+
+/**
+ * 
+ * @returns SessionsByCategory
+ * {
+ *   categoryId: [
+ *     {
+ *       id: string;
+ *       categoryId: string;
+ *       finishedAt: number;
+ *      scorePerPosition: number;
+ *      rawTotalScore: number;
+ *      positionsPlayed: number;
+ *     }
+ *   ]
+ * }
+ */
+
+export function loadSessionHistory(): SessionsByCategory {
+    if (typeof window === "undefined") return {};
+    const sessionHistory = localStorage.getItem('SessionHistory');
+    if (sessionHistory === null || sessionHistory === "") {
+        return { };
+    }
+    try {
+        return JSON.parse(sessionHistory);
+    } catch (error) {
+        console.error('Error loading session history:', error);
+        return {};
+    }
+}
+
+export function saveCategorySession(newSession: CategorySession): void {
+    // loading all sessions from localStorage
+    const allSessions = loadSessionHistory();
+
+    // getting the category sessions for the new session
+    const categoryId = newSession.categoryId;
+    const categorySessions = allSessions[categoryId] ?? [];
+
+    // adding the new session to the category sessions
+    const updatedCategorySessions = [...categorySessions, newSession];
+
+    // keeping only the last 10 sessions
+    updatedCategorySessions.sort((a: CategorySession, b: CategorySession) => b.finishedAt - a.finishedAt);
+    const trimmedCategorySessions = updatedCategorySessions.slice(0, 10);
+
+    // updating the category sessions in the all sessions
+    allSessions[categoryId] = trimmedCategorySessions;
+
+    // saving the all sessions to localStorage
+    localStorage.setItem('SessionHistory', JSON.stringify(allSessions));
+
+}
+
+export function getCategoryAverageScorePerPosition(categoryId: string): number | null {
+    try {
+        const allSessions = loadSessionHistory();
+        const categorySessions = allSessions[categoryId] ?? [];
+
+        if (categorySessions.length === 0) return null;
+        const sum = categorySessions.reduce((acc: number, session: CategorySession) => acc + session.scorePerPosition, 0);
+
+        return sum / categorySessions.length;
+    } catch (error) {
+        console.error('Error getting category average score per position:', error);
+        return null;
+    }
 }

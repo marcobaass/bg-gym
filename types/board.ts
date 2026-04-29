@@ -104,3 +104,17 @@ export interface PositionCategory {
 export type UserLibrary = {
   library: PositionCategory[];
 }
+
+// Session stats interface
+export interface CategorySession {
+  id: string;
+  categoryId: string;
+  finishedAt: number;
+  positionsPlayed: number;
+  scorePerPosition: number;
+  rawTotalScore: number;
+}
+
+export interface SessionsByCategory {
+  [categoryId: string]: CategorySession[];
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { loadUserLibrary } from '@/utils/userLibrary'
+import { getCategoryAverageScorePerPosition, loadUserLibrary } from '@/utils/userLibrary'
 import Link from 'next/link'
 
 export default function Home() {
@@ -38,6 +38,8 @@ export default function Home() {
           >
             <div className="rounded-lg shadow-md p-4 mb-4 bg-sky-50">
               <h3 className="text-lg font-bold">{category.category.name}</h3>
+              <p className="text-gray-600">{getCategoryAverageScorePerPosition(category.category.id) ?? 0} / 6</p>
+              <p className="text-gray-600">avg. last 10</p>
               <p className="text-gray-600">{category.positions.length} positions</p>
             </div>
           </Link>
@@ -52,7 +54,7 @@ export default function Home() {
         </div>
         </Link>
 
-        <Link href='/board'>Go to the Training Center</Link>
+
       </div>
         </div>
   )

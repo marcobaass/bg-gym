@@ -10,7 +10,7 @@ import { compareWithBestMoves } from '@/utils/compareBestMoves-utils';
 import ResultsModal from '@/components/ResultsModal';
 import { pointsFromEquityDiff } from '@/utils/scoring-utils';
 import { loadUserLibrary, saveCategorySession, shufflePositions } from '@/utils/userLibrary';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import useBoardDestinationClick from './_hooks/useBoardDestinationClick';
 
@@ -30,7 +30,7 @@ const cubeDecisions: CubeDecision[] = [
 ];
 
 export default function Board({}) {
-  
+  const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsCategoryId = searchParams.get('categoryId');
   console.log("Search params categoryId:", searchParamsCategoryId);
@@ -84,6 +84,27 @@ export default function Board({}) {
     setCurrentPositionIndex(Math.min(positionData.length - 1, currentPositionIndex + 1))
   }
 
+  const positionsPlayed = positionData.length
+
+  const handleSessionDone = () => {
+    setShowResultsModal(false)
+    setCubeDecision(null)
+    setCubeOptions([])
+    setCubePoints(0)
+    const categorySession: CategorySession = {
+      id: crypto.randomUUID(),
+      categoryId: searchParamsCategoryId ?? '',
+      finishedAt: Date.now(),
+      positionsPlayed: positionsPlayed,
+      rawTotalScore: ui.totalScore,
+      scorePerPosition: positionsPlayed > 0 ? ui.totalScore / positionData.length : 0,
+    }
+    if (searchParamsCategoryId) {
+      saveCategorySession(categorySession);
+    }
+    router.push('/')
+  }
+
   const handleCheckerClick = (pointIndex: number) => {
     console.log(`Clicked checker on point ${pointIndex + 1}`)
 
@@ -114,8 +135,6 @@ export default function Board({}) {
       
       const comparisonResult = compareWithBestMoves(userMoves, bestMoves, userColor as Color)
 
-      const positionsPlayed = positionData.length;
-
       let pointsForMove: number
       if (comparisonResult === undefined) {
         // User's move is not in bestMoves at all → 0 points
@@ -124,25 +143,8 @@ export default function Board({}) {
         const bestEquity = bestMoves[0]?.equity ?? 0
         const userEquity = comparisonResult.equity ?? 0
         pointsForMove = pointsFromEquityDiff(bestEquity, userEquity)
-      }
-      
-      const nextTotalScore = ui.totalScore + pointsForMove;
-      
-      if (positionsPlayed === currentPositionIndex + 1) {
-        const categorySession: CategorySession = {
-          id: crypto.randomUUID(),
-          categoryId: searchParamsCategoryId ?? '',
-          finishedAt: Date.now(),
-          positionsPlayed: positionsPlayed,
-          rawTotalScore: nextTotalScore,
-          scorePerPosition: positionsPlayed > 0 ? nextTotalScore / positionData.length : 0,
-        }
-        if (searchParamsCategoryId) {
-          saveCategorySession(categorySession);
-        }
-        
-      }
-      
+      }      
+           
       dispatch({ type: "ADD_SCORE", score: pointsForMove })      
       setResult(comparisonResult as Move);
       setShowResultsModal(true);
@@ -229,15 +231,13 @@ export default function Board({}) {
         result={result}
         bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
         currentPositionIndex={currentPositionIndex}
-        setCurrentPositionIndex={setCurrentPositionIndex}
         positionData={positionData}
         score={ui.score}
         totalScore={ui.totalScore}
         cubeOptions={cubeOptions}
-        setCubeOptions={setCubeOptions}
         cubePoints={cubePoints}
-        setCubePoints={setCubePoints}
         handleNextPosition={handleNextPosition}
+        handleSessionDone={handleSessionDone}
         />
       )}
     </>

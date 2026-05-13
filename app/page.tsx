@@ -2,17 +2,19 @@
 
 import { getCategoryAverageScorePerPosition, loadUserLibrary } from '@/utils/userLibrary'
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function Home() {
 
-  const userLibrary = loadUserLibrary()
-  return (
-      <div>
-        <h1>Welcome to the Backgammon Gym</h1>
+  const [userLibrary, setUserLibrary] = useState(() => loadUserLibrary())
 
-        <h2>Pick a category and start training</h2>
+  return (
+      <div className="p-4 max-w-7xl mx-auto space-y-4 mt-10">
+        <h1 className="text-2xl font-bold">Welcome to the Backgammon Gym</h1>
+
+        <h2 className="text-lg font-bold">Pick a category and start training</h2>
         {/* Filter categories */}
-        <select>
+        <select className="border border-gray-300 px-2 py-1 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:outline-none transition duration-150 ease-in-out mb-4 focus:ring-indigo-500 focus:border-indigo-500">
           <option value="default">Default</option>
           <option value="weakest">Weakest first</option>
           <option value="longest">Longest untrained</option>
@@ -21,16 +23,16 @@ export default function Home() {
         </select>
 
         {/* Category Cards */}
-        <h3>Default Categories</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
+          <h3 className="text-lg font-bold col-span-3">Default Categories</h3>
           <div className="rounded-lg shadow-md p-4 bg-sky-50">
             <h3 className="text-lg font-bold">Category 1</h3>
             <p className="text-gray-600">10 positions</p>
           </div>
         </div>
         
-        <h3>Your Categories</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-lg font-bold col-span-3">Your Categories</h3>
         {userLibrary.library.map((category) => (
           <Link
             key={category.category.id}
@@ -53,9 +55,7 @@ export default function Home() {
           </div>
         </div>
         </Link>
-
-
       </div>
-        </div>
+      </div>
   )
 }

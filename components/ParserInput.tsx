@@ -110,9 +110,9 @@ export default function ParserInput() {
   }
 
   return (
-    <div className="flex justify-center p-4 bg-gray-50">
+    <div className="flex justify-center p-4">
 
-      <div className="w-full max-w-sm bg-white p-6 rounded-xl shadow-2xl space-y-4 border border-indigo-100">
+      <div className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md space-y-4 border border-indigo-100">
 
         <div className="text-xl font-bold text-indigo-700 text-center">Position Input</div>
             <form onSubmit={handleSubmit}>

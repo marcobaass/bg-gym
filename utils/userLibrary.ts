@@ -137,15 +137,19 @@ export function saveCategorySession(newSession: CategorySession): void {
 
 }
 
-export function getCategoryAverageScorePerPosition(categoryId: string): number | null {
+export function getCategoryAverageScore(sessions: SessionsByCategory, categoryId: string): number | null {
+    const categorySessions = sessions[categoryId] ?? [];
+
+    if (categorySessions.length === 0) return null;
+    const sum = categorySessions.reduce((acc: number, session: CategorySession) => acc + session.scorePerPosition, 0);
+
+    return sum / categorySessions.length;
+}
+
+export function getAllSessions(categoryId: string): number | null {
     try {
         const allSessions = loadSessionHistory();
-        const categorySessions = allSessions[categoryId] ?? [];
-
-        if (categorySessions.length === 0) return null;
-        const sum = categorySessions.reduce((acc: number, session: CategorySession) => acc + session.scorePerPosition, 0);
-
-        return sum / categorySessions.length;
+        return getCategoryAverageScore(allSessions, categoryId);
     } catch (error) {
         console.error('Error getting category average score per position:', error);
         return null;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { SessionsByCategory, UserLibrary } from '@/types/board';
-import { getCategoryAverageScorePerPosition, loadSessionHistory, loadUserLibrary } from '@/utils/userLibrary'
+import { getCategoryAverageScore, loadSessionHistory, loadUserLibrary, saveUserLibrary } from '@/utils/userLibrary'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
@@ -29,6 +29,9 @@ export default function Home() {
     setSessionHistory(sessionHistory)
   }, []);
 
+  /**
+   * Sorting category cards
+   */
   const sortedCategories = [...userLibrary?.library ?? []];
 
   sortedCategories.sort((a, b) => {
@@ -41,8 +44,8 @@ export default function Home() {
         return nameTieBreak();
       case "weakest": {
         const primary =
-          (getCategoryAverageScorePerPosition(a.category.id) ?? 0) -
-          (getCategoryAverageScorePerPosition(b.category.id) ?? 0);
+          (getCategoryAverageScore(sessionHistory ?? {}, a.category.id) ?? 0) -
+          (getCategoryAverageScore(sessionHistory ?? {}, b.category.id) ?? 0);
         if (primary !== 0) return primary;
         return nameTieBreak();
       }
@@ -60,7 +63,7 @@ export default function Home() {
       }
       case "longest": {
         const aLast = lastFinishedAtMs(sessionHistory ?? {}, a.category.id);
-        const bLast = lastFinishedAtMs(sessionHistory, b.category.id);
+        const bLast = lastFinishedAtMs(sessionHistory ?? {}, b.category.id);
         const primary = aLast - bLast; // older/smaller timestamp first (never-trained = -Infinity goes first)
         if (primary !== 0) return primary;
         return nameTieBreak();
@@ -69,6 +72,15 @@ export default function Home() {
         return nameTieBreak();
     }
   });
+
+  // todo: implement modal or dialog for confirmation instead of window.confirm
+  const deleteCategory = (categoryId: string) => {
+    if (window.confirm("Do you really want to delete this category?")) {
+      const newUserLibrary = (userLibrary?.library ?? []).filter((c) => c.category.id !== categoryId)
+      saveUserLibrary({ library: newUserLibrary })
+      setUserLibrary({ library: newUserLibrary })
+    }
+  }
 
   return (
       <div className="p-4 max-w-7xl mx-auto space-y-4 mt-10">
@@ -98,23 +110,34 @@ export default function Home() {
           <option value="most">Most positions</option>
         </select>
 
-        {/* Show the filtered/sorted categorys */}
+        {/* Show the filtered/sorted categories */}
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
         <h3 className="text-lg font-bold col-span-3">Your Categories</h3>
 
         {sortedCategories.map((categories) => (
-          <Link
+          <div
             key={categories.category.id}
-            href={`/board?categoryId=${categories.category.id}`}
+            className="relative rounded-lg shadow-md p-4 mb-4 bg-sky-50"
           >
-            <div className="rounded-lg shadow-md p-4 mb-4 bg-sky-50">
+            <Link
+              href={`/board?categoryId=${categories.category.id}`}
+              className="block pr-7"
+            >
               <h3 className="text-lg font-bold">{categories.category.name}</h3>
-              <p className="text-gray-600">{getCategoryAverageScorePerPosition(categories.category.id) ?? 0} / 6</p>
+              <p className="text-gray-600">{getCategoryAverageScore(sessionHistory ?? {}, categories.category.id) ?? 0} / 6</p>
               <p className="text-gray-600">avg. last 10</p>
               <p className="text-gray-600">{categories.positions.length} positions</p>
-            </div>
-          </Link>
+            </Link>
+            <button
+              type="button"
+              onClick={() => deleteCategory(categories.category.id)}
+              className="absolute top-3 right-3 inline-flex items-center justify-center text-white hover:bg-red-700 w-5 h-5 text-xs cursor-pointer bg-red-500 rounded-sm"
+              aria-label={`Delete category ${categories.category.name}`}
+            >
+              X
+            </button>
+          </div>
         ))}
         
         {/* save position card */}

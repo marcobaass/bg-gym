@@ -6,6 +6,7 @@ import { getCategoryAverageScore, loadSessionHistory, loadUserLibrary, saveUserL
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import RatingDots from '@/components/stats/ratingDots'
+import LastPlayed from '@/components/stats/lastPlayed'
 
 
 function lastFinishedAtMs(
@@ -128,9 +129,16 @@ export default function Home() {
               <h3 className="text-lg font-bold">{categories.category.name}</h3>
               <p className="text-gray-600">{(getCategoryAverageScore(sessionHistory ?? {}, categories.category.id) ?? 0).toFixed(1)} / 6</p>
               <p className="text-gray-600">avg. last 10</p>
+
               {/* dots component for avg. last 10 */}
               <RatingDots rating={sessionHistory[categories.category.id]} />
-              <p className="text-gray-600">{categories.positions.length} positions</p>
+
+
+              <div className="flex items-center justify-between" >
+                <p className="text-gray-600">{categories.positions.length} positions</p>
+                {/* last played component */}
+                <LastPlayed lastPlayed={sessionHistory[categories.category.id][0]?.finishedAt ?? null} />
+              </div>
             </Link>
             <button
               type="button"

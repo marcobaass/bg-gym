@@ -5,6 +5,7 @@ import type { SessionsByCategory, UserLibrary } from '@/types/board';
 import { getCategoryAverageScore, loadSessionHistory, loadUserLibrary, saveUserLibrary } from '@/utils/userLibrary'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import RatingDots from '@/components/stats/ratingDots'
 
 
 function lastFinishedAtMs(
@@ -125,8 +126,10 @@ export default function Home() {
               className="block pr-7"
             >
               <h3 className="text-lg font-bold">{categories.category.name}</h3>
-              <p className="text-gray-600">{getCategoryAverageScore(sessionHistory ?? {}, categories.category.id) ?? 0} / 6</p>
+              <p className="text-gray-600">{(getCategoryAverageScore(sessionHistory ?? {}, categories.category.id) ?? 0).toFixed(1)} / 6</p>
               <p className="text-gray-600">avg. last 10</p>
+              {/* dots component for avg. last 10 */}
+              <RatingDots rating={sessionHistory[categories.category.id]} />
               <p className="text-gray-600">{categories.positions.length} positions</p>
             </Link>
             <button

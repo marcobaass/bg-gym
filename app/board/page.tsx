@@ -68,13 +68,13 @@ export default function Board({}) {
     
   }, [currentPositionIndex, positionData])
 
-  const handlePreviousPosition = () => {
-    setShowResultsModal(false)
-    setCubeDecision(null)
-    setCubeOptions([])
-    setCubePoints(0)
-    setCurrentPositionIndex(Math.max(0, currentPositionIndex - 1))
-  }
+  // const handlePreviousPosition = () => {
+  //   setShowResultsModal(false)
+  //   setCubeDecision(null)
+  //   setCubeOptions([])
+  //   setCubePoints(0)
+  //   setCurrentPositionIndex(Math.max(0, currentPositionIndex - 1))
+  // }
 
   const handleNextPosition = () => {
     setShowResultsModal(false)
@@ -173,12 +173,12 @@ export default function Board({}) {
         <>
           <div className="text-center mb-4">
             <PositionHeader currentPositionIndex={currentPositionIndex} positionData={positionData} />
-            <NavigationControls
+            {/* <NavigationControls
               onPrevious={handlePreviousPosition}
               onNext={handleNextPosition}
               canGoPrevious={currentPositionIndex > 0}
               canGoNext={currentPositionIndex < positionData.length - 1}
-            />
+            /> */}
             <div className="flex items-center justify-center gap-2">
               <CubeDecisionButtons
                 isCubePosition={isCubePosition}
@@ -188,17 +188,11 @@ export default function Board({}) {
                 userColor={userColor}
                 isRedouble={isRedouble}
               />
-              <SubmitButton
-                current={current}
-                handleSubmitMove={handleSubmitMove}
-                handleSubmitCubeDecision={handleSubmitCubeDecision}
-                disabled={ui.remainingDice.length > 0}
-              />
             </div>
 
           </div>
 
-          <div className="relative">
+          <div className="relative @container">
             <BoardRenderer
               positionData={ui.currentPosition}
               selectedPoint={ui.selectedPoint}
@@ -209,13 +203,21 @@ export default function Board({}) {
             />
             {
               current?.analysisType === "Move" && (
-                <button
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-1 enabled:bg-white disabled:bg-gray-300 text-black px-4 py-2 rounded-md border border-black enabled:hover:bg-green-100"
-                  onClick={() => dispatch({ type: 'UNDO_MOVE' })}
-                  disabled={ui.moveHistory.length === 0}            
-                >
-                  Undo
-                </button>
+                <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
+                  <button
+                    className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto cursor-pointer"
+                    onClick={() => dispatch({ type: 'UNDO_MOVE' })}
+                    disabled={ui.moveHistory.length === 0}
+                  >
+                    ↩
+                  </button>
+                  <SubmitButton                    
+                    current={current}
+                    handleSubmitMove={handleSubmitMove}
+                    handleSubmitCubeDecision={handleSubmitCubeDecision}
+                    disabled={ui.remainingDice.length > 0}
+                  />
+                </div>
               )
             }
           </div>

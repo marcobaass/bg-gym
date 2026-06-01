@@ -2,15 +2,8 @@
 
 export default function RatingDots({ rating }) {
 
-    console.log(rating)
-
-    const dotsColors = rating.map((session) => {
-        const color = session.scorePerPosition * 20
-        return color
-    })
-
-    console.log(dotsColors)
-
+  const sessions = rating ?? []
+  const dotsColors = sessions.map((session) => session.scorePerPosition * 20)
 
   return (
     <div className="flex items-center mb-1 mt-1">

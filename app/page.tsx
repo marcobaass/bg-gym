@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import RatingDots from '@/components/stats/ratingDots'
 import LastPlayed from '@/components/stats/lastPlayed'
+import AccuracyRing from '@/components/stats/accuracyRing'
 
 
 function lastFinishedAtMs(
@@ -46,8 +47,8 @@ export default function Home() {
         return nameTieBreak();
       case "weakest": {
         const primary =
-          (getCategoryAverageScore(sessionHistory ?? {}, a.category.id) ?? 0) -
-          (getCategoryAverageScore(sessionHistory ?? {}, b.category.id) ?? 0);
+          (getCategoryAverageScore(sessionHistory, a.category.id) ?? 0) -
+          (getCategoryAverageScore(sessionHistory, b.category.id) ?? 0);
         if (primary !== 0) return primary;
         return nameTieBreak();
       }
@@ -57,15 +58,15 @@ export default function Home() {
         return nameTieBreak();
       }
       case "recently": {
-        const aLast = lastFinishedAtMs(sessionHistory ?? {}, a.category.id);
-        const bLast = lastFinishedAtMs(sessionHistory ?? {}, b.category.id);
+        const aLast = lastFinishedAtMs(sessionHistory, a.category.id);
+        const bLast = lastFinishedAtMs(sessionHistory, b.category.id);
         const primary = bLast - aLast; // more recent first
         if (primary !== 0) return primary;
         return nameTieBreak();
       }
       case "longest": {
-        const aLast = lastFinishedAtMs(sessionHistory ?? {}, a.category.id);
-        const bLast = lastFinishedAtMs(sessionHistory ?? {}, b.category.id);
+        const aLast = lastFinishedAtMs(sessionHistory, a.category.id);
+        const bLast = lastFinishedAtMs(sessionHistory, b.category.id);
         const primary = aLast - bLast; // older/smaller timestamp first (never-trained = -Infinity goes first)
         if (primary !== 0) return primary;
         return nameTieBreak();
@@ -117,39 +118,50 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
         <h3 className="text-lg font-bold col-span-3">Your Categories</h3>
 
-        {sortedCategories.map((categories) => (
-          <div
-            key={categories.category.id}
-            className="relative rounded-lg shadow-md p-4 mb-4 bg-sky-50"
-          >
-            <Link
-              href={`/board?categoryId=${categories.category.id}`}
-              className="block pr-7"
+        {sortedCategories.map((categories) => {
+
+          const categoryId = categories.category.id
+          const sessions = sessionHistory[categoryId] ?? []
+          const avgScore = getCategoryAverageScore(sessionHistory, categoryId) ?? 0
+
+          return (
+            <div
+              key={categoryId}
+              className="relative rounded-lg shadow-md p-4 mb-4 bg-sky-50"
             >
-              <h3 className="text-lg font-bold">{categories.category.name}</h3>
-              <p className="text-gray-600">{(getCategoryAverageScore(sessionHistory ?? {}, categories.category.id) ?? 0).toFixed(1)} / 6</p>
-              <p className="text-gray-600">avg. last 10</p>
+              <Link
+                href={`/board?categoryId=${categoryId}`}
+                className="block pr-7"
+              >
+                <h3 className="text-lg font-bold">{categories.category.name}</h3>
+                <p className="text-gray-600">{avgScore.toFixed(1)} / 6</p>
+                <div className="flex">
+                  <div className="grid items-center justify-between">
+                    <p className="text-gray-600">avg. last 10</p>
+                    {/* dots component for avg. last 10 */}
+                    <RatingDots rating={sessions} />
+                  </div>
+                  <AccuracyRing score={avgScore} />
+                </div>
 
-              {/* dots component for avg. last 10 */}
-              <RatingDots rating={sessionHistory[categories.category.id]} />
 
-
-              <div className="flex items-center justify-between" >
-                <p className="text-gray-600">{categories.positions.length} positions</p>
-                {/* last played component */}
-                <LastPlayed lastPlayed={sessionHistory[categories.category.id][0]?.finishedAt ?? null} />
-              </div>
-            </Link>
-            <button
-              type="button"
-              onClick={() => deleteCategory(categories.category.id)}
-              className="absolute top-3 right-3 inline-flex items-center justify-center text-white hover:bg-red-700 w-5 h-5 text-xs cursor-pointer bg-red-500 rounded-sm"
-              aria-label={`Delete category ${categories.category.name}`}
-            >
-              X
-            </button>
-          </div>
-        ))}
+                <div className="flex items-center justify-between" >
+                  <p className="text-gray-600">{categories.positions.length} positions</p>
+                  {/* last played component */}
+                  <LastPlayed lastPlayed={sessions[0]?.finishedAt ?? null} />
+                </div>
+              </Link>
+              <button
+                type="button"
+                onClick={() => deleteCategory(categoryId)}
+                className="absolute top-3 right-3 inline-flex items-center justify-center text-white hover:bg-red-700 w-5 h-5 text-xs cursor-pointer bg-red-500 rounded-sm"
+                aria-label={`Delete category ${categories.category.name}`}
+              >
+                X
+              </button>
+            </div>
+          )
+        })}
         
         {/* save position card */}
         <Link href='/parser'>

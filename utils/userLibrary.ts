@@ -1,5 +1,5 @@
 import { Category, CategorySession, Position, SessionsByCategory, UserLibrary } from "@/types/board";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient, User } from "@supabase/supabase-js";
 
 export function isCategoryNameTaken(userCategories: Category[], name: string) {
     const inputName = name.toLowerCase().trim();
@@ -326,10 +326,40 @@ export async function importLocalStorageToSupabase(
       }
     }
   
-    // --- localStorage leeren ---
+    // --- empty localStorage ---
     if (typeof window !== "undefined") {
       localStorage.removeItem("UserLibrary");
       localStorage.removeItem("SessionHistory");
       clearLastCategoryId();
     }
+  }
+
+  export async function insertCategoryToSupabase(supabase: SupabaseClient, userId: string, category: Category): Promise<void> {
+
+    const { error } = await supabase
+        .from('categories')
+        .insert({
+            id: category.id,
+            user_id: userId,
+            name: category.name
+        })
+
+        if (error) {
+            console.error("Insert category failed:", error)
+        }
+  }
+
+  export async function insertPositionToSupabase(supabase: SupabaseClient, userId: string, categoryId: string, position: Position): Promise<void> {
+
+    const { error } = await supabase
+        .from('positions')
+        .insert({
+            category_id: categoryId,
+            user_id: userId,
+            data: position
+        })
+
+        if (error) {
+            console.error("Insert position failed:", error)
+        }
   }

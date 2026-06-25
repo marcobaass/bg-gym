@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { SessionsByCategory, UserLibrary } from '@/types/board';
-import { loadUserLibraryFromSupabase, importLocalStorageToSupabase, getCategoryAverageScore, loadSessionHistory, loadSessionHistoryFromSupabase, loadUserLibrary, saveUserLibrary } from '@/utils/userLibrary'
+import { importLocalStorageToSupabase, getCategoryAverageScore, saveUserLibrary } from '@/utils/userLibrary'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import RatingDots from '@/components/stats/ratingDots'
@@ -11,6 +11,7 @@ import AccuracyRing from '@/components/stats/accuracyRing'
 import Login from '@/components/auth/Login'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
+import { getUserLibrary, getSessionHistory } from '@/utils/repository';
 
 function lastFinishedAtMs(
   sessionsByCategory: SessionsByCategory,
@@ -53,17 +54,11 @@ export default function Home() {
       if (user) {
         await importLocalStorageToSupabase(supabase, user.id)
       }
-      if (user) {
-        const userLibrary = await loadUserLibraryFromSupabase(supabase)
-        const sessionHistory = await loadSessionHistoryFromSupabase(supabase)
-        setUserLibrary(userLibrary)
-        setSessionHistory(sessionHistory)
-      } else {
-        const userLibrary = loadUserLibrary()
-        const sessionHistory = loadSessionHistory()
-        setUserLibrary(userLibrary)
-        setSessionHistory(sessionHistory)
-      }
+
+      const userLibrary = await getUserLibrary(supabase, user)
+      const sessionHistory = await getSessionHistory(supabase, user)
+      setUserLibrary(userLibrary)
+      setSessionHistory(sessionHistory)
     }
     fetchData()
   }, [user, supabase]);

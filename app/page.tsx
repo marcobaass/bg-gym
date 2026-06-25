@@ -2,13 +2,15 @@
 
 import React from 'react';
 import type { SessionsByCategory, UserLibrary } from '@/types/board';
-import { getCategoryAverageScore, loadSessionHistory, loadUserLibrary, saveUserLibrary } from '@/utils/userLibrary'
+import { loadUserLibraryFromSupabase, importLocalStorageToSupabase, getCategoryAverageScore, loadSessionHistory, loadSessionHistoryFromSupabase, loadUserLibrary, saveUserLibrary } from '@/utils/userLibrary'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import RatingDots from '@/components/stats/ratingDots'
 import LastPlayed from '@/components/stats/lastPlayed'
 import AccuracyRing from '@/components/stats/accuracyRing'
-
+import Login from '@/components/auth/Login'
+import { createClient } from '@/utils/supabase/client'
+import { User } from '@supabase/supabase-js'
 
 function lastFinishedAtMs(
   sessionsByCategory: SessionsByCategory,
@@ -24,13 +26,47 @@ export default function Home() {
   const [userLibrary, setUserLibrary] = useState<UserLibrary>()
   const [sessionHistory, setSessionHistory] = useState<SessionsByCategory>({})
   const [selectedCategory, setSelectedCategory] = useState<string | null>('default')
+  const [user, setUser] = useState<User | null>(null)
 
+  const supabase = createClient()
+
+  //User data from Supabase
   useEffect(() => {
-    const userLibrary = loadUserLibrary()
-    const sessionHistory = loadSessionHistory()
-    setUserLibrary(userLibrary)
-    setSessionHistory(sessionHistory)
-  }, []);
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    fetchUser()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    // Unsubscribe from auth state changes on unmount
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  //User data from localStorage or Supabase
+  useEffect(() => {
+    async function fetchData() {
+      if (user) {
+        await importLocalStorageToSupabase(supabase, user.id)
+      }
+      if (user) {
+        const userLibrary = await loadUserLibraryFromSupabase(supabase)
+        const sessionHistory = await loadSessionHistoryFromSupabase(supabase)
+        setUserLibrary(userLibrary)
+        setSessionHistory(sessionHistory)
+      } else {
+        const userLibrary = loadUserLibrary()
+        const sessionHistory = loadSessionHistory()
+        setUserLibrary(userLibrary)
+        setSessionHistory(sessionHistory)
+      }
+    }
+    fetchData()
+  }, [user, supabase]);
 
   /**
    * Sorting category cards
@@ -87,6 +123,7 @@ export default function Home() {
 
   return (
       <div className="p-4 max-w-7xl mx-auto space-y-4 mt-10">
+        <Login />
         <h1 className="text-2xl font-bold">Welcome to the Backgammon Gym</h1>
 
         <h2 className="text-lg font-bold">Pick a category and start training</h2>        

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { SessionsByCategory, UserLibrary } from '@/types/board';
-import { importLocalStorageToSupabase, getCategoryAverageScore, saveUserLibrary } from '@/utils/userLibrary'
+import { importLocalStorageToSupabase, getCategoryAverageScore } from '@/utils/userLibrary'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import RatingDots from '@/components/stats/ratingDots'
@@ -11,7 +11,7 @@ import AccuracyRing from '@/components/stats/accuracyRing'
 import Login from '@/components/auth/Login'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { getUserLibrary, getSessionHistory } from '@/utils/repository';
+import { deleteCategory, getUserLibrary, getSessionHistory } from '@/utils/repository';
 
 function lastFinishedAtMs(
   sessionsByCategory: SessionsByCategory,
@@ -108,11 +108,11 @@ export default function Home() {
   });
 
   // todo: implement modal or dialog for confirmation instead of window.confirm
-  const deleteCategory = (categoryId: string) => {
+  const handleDeleteCategory = async (categoryId: string) => {
     if (window.confirm("Do you really want to delete this category?")) {
-      const newUserLibrary = (userLibrary?.library ?? []).filter((c) => c.category.id !== categoryId)
-      saveUserLibrary({ library: newUserLibrary })
-      setUserLibrary({ library: newUserLibrary })
+      await deleteCategory(supabase, user, categoryId)
+      setUserLibrary(await getUserLibrary(supabase, user))
+      setSessionHistory(await getSessionHistory(supabase, user))
     }
   }
 
@@ -185,7 +185,7 @@ export default function Home() {
               </Link>
               <button
                 type="button"
-                onClick={() => deleteCategory(categoryId)}
+                onClick={() => handleDeleteCategory(categoryId)}
                 className="absolute top-3 right-3 inline-flex items-center justify-center text-white hover:bg-red-700 w-5 h-5 text-xs cursor-pointer bg-red-500 rounded-sm"
                 aria-label={`Delete category ${categories.category.name}`}
               >

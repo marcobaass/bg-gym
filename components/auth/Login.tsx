@@ -2,7 +2,6 @@ import LoginModal from '@/components/auth/LoginModal'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { loadUserLibraryFromSupabase } from '@/utils/userLibrary'
 
 export default function Login() {
 

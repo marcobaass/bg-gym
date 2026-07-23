@@ -201,6 +201,15 @@ export async function loadSessionHistoryFromSupabase(supabase: SupabaseClient): 
             rawTotalScore: session.raw_total_score,
         }];
     });
+    
+    for (const categoryId of Object.keys(sessionsByCategory)) {
+        const sessions = sessionsByCategory[categoryId]
+
+        sessions.sort((a,b) => b.finishedAt - a.finishedAt)
+
+        sessionsByCategory[categoryId] = sessions.slice(0, 10)
+
+    }
 
     return sessionsByCategory;
 }
@@ -362,4 +371,84 @@ export async function importLocalStorageToSupabase(
         if (error) {
             console.error("Insert position failed:", error)
         }
+  }
+
+  export async function saveCategorySessionToSupabase(supabase: SupabaseClient, userId: string, session: CategorySession): Promise<void> {
+
+    const { error } = await supabase
+        .from('category_sessions')
+        .insert({
+            id: session.id,
+            category_id: session.categoryId,
+            user_id: userId,
+            finished_at: session.finishedAt,
+            positions_played: session.positionsPlayed,
+            score_per_position: session.scorePerPosition,
+            raw_total_score: session.rawTotalScore
+        })
+
+        if (error) {
+            console.error("Insert session failed:", error)
+            return
+        }
+
+        const { data, error: sessionError} = await supabase
+            .from('category_sessions')
+            .select('id, finished_at')
+            .eq('category_id', session.categoryId)
+            .order('finished_at', { ascending: false})
+
+        if (sessionError) {
+            console.error("Trim sessions:", sessionError)
+            return
+        }
+
+        if (data.length > 10) {
+            const idsToDelete = data.slice(10).map(row => row.id)
+                
+            const { error: trimError } = await supabase
+                .from('category_sessions')
+                .delete()
+                .in('id', idsToDelete)
+                
+                if (trimError) {
+                    console.error("Trim sessions:", trimError)
+                    return
+                }
+        }
+
+  }
+
+  export async function deleteCategoryFromSupabase(supabase: SupabaseClient, userId: string, categoryId: string): Promise<void> {
+
+    const { error: sessionDeleteError } = await supabase
+        .from('category_sessions')
+        .delete()
+        .eq('category_id', categoryId)
+
+        if (sessionDeleteError) {
+            console.error("Delete category sessions failed:", sessionDeleteError)
+            return
+        }
+
+    const { error: postionsDeleteError } = await supabase
+        .from('positions')
+        .delete()
+        .eq('category_id', categoryId)
+
+        if (postionsDeleteError) {
+            console.error("Delete positions failed:", postionsDeleteError)
+            return
+        }
+
+    const { error: categoryDeleteError } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId)
+
+        if (categoryDeleteError) {
+            console.error("Delete positions failed:", categoryDeleteError)
+            return
+        }
+
   }

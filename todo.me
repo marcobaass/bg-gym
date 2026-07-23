@@ -46,26 +46,50 @@
 [x] circle with percentage/ or average
 [x] previous next buttons entfernen
 [x] Submitt button on dice
-[ ] authentification and database implementation
+[x] authentification and database implementation
     A.
     [x] categories table
     [x] positions table
     [x] category_sessions table
     B.
-    [~] guest vs logged-in rule
-    [~] repository layer in code
+    [x] guest vs logged-in rule
+    [x] repository layer in code
     [x] homepage loads from Supabase when logged in
     [x] parser saves to Supabase
-    [ ] board saves sessions to Supabase
-    [ ] delete categories
-    [~] Board loads from Supabase (Parser dropdown yes; board/page still localStorage)
+    [x] board saves sessions to Supabase
+    [x] delete categories
+    [x] Board loads from Supabase
     C.
     [x] import localStorage on first login
+[ ] Readme / documentation
+[ ] Deploy
 [ ] default categories (Opening rolls, second roll, etc.)
+    A. Datenmodell (Sharing-ready)
+    [ ] Spalte visibility an categories: private | system | (später: public)
+    [ ] owner_user_id klar benennen / user_id als Owner behandeln
+    [ ] RLS: SELECT = eigene OR visibility = system (später: OR public OR category_shares)
+    [ ] RLS: INSERT/UPDATE/DELETE nur Owner; system-Kategorien nur Curator/System-User
+    B. Curator-Workflow (Parser)
+    [ ] Supabase Auth-User „Curator/Defaults“ anlegen, UUID in Env (z.B. SYSTEM_USER_ID)
+    [ ] Als Curator einloggen → Parser wie heute → Kategorien + XG-Positionen in DB
+    [ ] Neue Kategorien beim Curator mit visibility = system speichern (Parser oder DB-Default)
+    C. App laden & anzeigen
+    [ ] loadUserLibraryFromSupabase: eigene + system-Kategorien mergen (ein Loader-Pfad)
+    [ ] Homepage: Block „Default Categories“ aus system-Kategorien (Hardcode entfernen)
+    [ ] Board/Training: categoryId von System-Kategorien erlauben
+    [ ] Sessions bleiben pro User (category_sessions.user_id) — auch bei Defaults
+    D. Gäste (optional, später entscheiden)
+    [ ] Variante 1: anon SELECT nur auf visibility = system
+    [ ] Variante 2: exportiertes JSON im Repo für Gäste
+    E. Später: User-Kategorien teilen (gleiches Modell, kein zweiter Sonderweg)
+    [ ] visibility = public ODER Tabelle category_shares
+    [ ] UI: „Kategorie teilen“ / öffentlich schalten (kein Parser-Umbau nötig)
+    [ ] UI trennen: Offizielle Defaults (system) vs. Community (public) vs. Meine (private)
+    [ ] Kein Verschieben von user_id nötig — nur visibility ändern
 [ ] delete button on cards -> edit button
     [ ] rename categorys - use same helper in userLibrary.ts for check if taken
-    [ ] modal or dialog for ask if really delete category   
-    [ ] delete category
+    [~] modal or dialog for ask if really delete category   
+    [x] delete category
     [ ] delete positions?
 [ ] option for setting how much positions to train / option on next modal to quitt session?
 

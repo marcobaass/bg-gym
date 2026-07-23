@@ -1,6 +1,6 @@
 import { SupabaseClient, User } from "@supabase/supabase-js";
-import { insertPositionToSupabase, insertCategoryToSupabase, loadSessionHistory, loadSessionHistoryFromSupabase, loadUserLibrary, loadUserLibraryFromSupabase, saveUserLibrary as saveUserLibraryLocal } from "./userLibrary";
-import { UserLibrary, SessionsByCategory, Category, Position } from "@/types/board";
+import { deleteCategoryFromSupabase, saveCategorySessionToSupabase, saveCategorySession as saveCategorySessionLocal, insertPositionToSupabase, insertCategoryToSupabase, loadSessionHistory, loadSessionHistoryFromSupabase, loadUserLibrary, loadUserLibraryFromSupabase, saveUserLibrary as saveUserLibraryLocal } from "./userLibrary";
+import { CategorySession, UserLibrary, SessionsByCategory, Category, Position } from "@/types/board";
 
 export async function getUserLibrary(supabase: SupabaseClient, user: User | null): Promise<UserLibrary> {    
 
@@ -42,4 +42,29 @@ export async function insertPosition(supabase: SupabaseClient, user: User | null
         await insertPositionToSupabase(supabase, user.id, categoryId, position)
     }
     return
+}
+
+export async function saveCategorySession(supabase: SupabaseClient, user: User | null, session: CategorySession): Promise<void> {
+    if (user) {
+        return await saveCategorySessionToSupabase(supabase, user.id, session)
+    } else {
+        saveCategorySessionLocal(session)
+    }
+}
+
+export async function deleteCategory(supabase: SupabaseClient, user: User | null, categoryId: string): Promise<void> {
+    if (user) {
+        return await deleteCategoryFromSupabase(supabase, user.id, categoryId)
+    } else {
+        const userLibrary = loadUserLibrary()
+        const newUserLibrary = userLibrary.library.filter(category => category.category.id !== categoryId)
+        saveUserLibraryLocal({library: newUserLibrary})
+
+        const sessionHistory = loadSessionHistory()
+        
+        delete sessionHistory[categoryId]
+
+        localStorage.setItem('SessionHistory', JSON.stringify(sessionHistory))
+        
+    }
 }

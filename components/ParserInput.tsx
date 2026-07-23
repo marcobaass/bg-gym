@@ -19,13 +19,7 @@ export default function ParserInput() {
   const [success, setSuccess] = useState("")
   const [activeTab, setActiveTab] = useState('Move')
 
-  const [categoryId, setCategoryId] = useState(() => {
-    if (typeof window === "undefined") return SENTINEL
-    const lastId = getLastCategoryId()
-    const initialFolders = loadUserLibrary().library
-    const exists = lastId ? initialFolders.find((folder) => folder.category.id === lastId) : null
-    return exists ? exists.category.id : SENTINEL
-  })
+  const [categoryId, setCategoryId] = useState(SENTINEL)
 
   const [newCategoryName, setNewCategoryName] = useState("")
   const [folders, setFolders] = useState<UserLibrary['library']>([])
@@ -54,6 +48,10 @@ export default function ParserInput() {
     async function loadFolders() {
       const library = await getUserLibrary(supabase, user)
       setFolders(library.library)
+      const lastId = getLastCategoryId()
+      const initialFolders = library.library
+      const exists = lastId ? initialFolders.find((folder) => folder.category.id === lastId) : null
+      setCategoryId(exists ? exists.category.id : SENTINEL)
     }
 
     loadFolders()
@@ -90,8 +88,7 @@ export default function ParserInput() {
 
         // Phase 2 & 3 saving
         // Guest: userLibrary from localStorage(only !user branch)
-        const userLibrary = loadUserLibrary()
-
+        
         // If category is not selected, create a new category
         if (categoryId === SENTINEL) {
           const newCategoryNameTrimmed: string = newCategoryName.trim()
@@ -105,7 +102,7 @@ export default function ParserInput() {
           }
 
           const newId = crypto.randomUUID()
-
+          
           // If user is logged in, insert category and position to Supabase
           if (user) {
             await insertCategory(supabase, user, { id: newId, name: newCategoryNameTrimmed })
@@ -114,8 +111,9 @@ export default function ParserInput() {
             setNewCategoryName("")
             setCategoryId(newId)
 
-          // If user is not logged in, insert category and position to localStorage
+            // If user is not logged in, insert category and position to localStorage
           } else {
+            const userLibrary = loadUserLibrary()
             userLibrary.library.push({
               category: {
                 id: newId,
@@ -139,6 +137,7 @@ export default function ParserInput() {
 
           // If user is not logged in, insert position to localStorage
           } else {
+            const userLibrary = loadUserLibrary()
             const category = userLibrary.library.find((category) => category.category.id === categoryId)
             if (category) {
               category.positions.push(positionData)

@@ -101,7 +101,7 @@ export interface Position {
 export interface Category {
   name: string;
   id: string;
-  visibility: "private" | "system" | "public";
+  visibility?: "private" | "system" | "public";
 }
 
 export interface PositionCategory {

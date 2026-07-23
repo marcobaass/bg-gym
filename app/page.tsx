@@ -1,21 +1,28 @@
-'use client'
+"use client";
 
-import React from 'react';
-import type { SessionsByCategory, UserLibrary } from '@/types/board';
-import { importLocalStorageToSupabase, getCategoryAverageScore } from '@/utils/userLibrary'
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import RatingDots from '@/components/stats/ratingDots'
-import LastPlayed from '@/components/stats/lastPlayed'
-import AccuracyRing from '@/components/stats/accuracyRing'
-import Login from '@/components/auth/Login'
-import { createClient } from '@/utils/supabase/client'
-import { User } from '@supabase/supabase-js'
-import { deleteCategory, getUserLibrary, getSessionHistory } from '@/utils/repository';
+import React from "react";
+import type { SessionsByCategory, UserLibrary } from "@/types/board";
+import {
+  importLocalStorageToSupabase,
+  getCategoryAverageScore,
+} from "@/utils/userLibrary";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import RatingDots from "@/components/stats/ratingDots";
+import LastPlayed from "@/components/stats/lastPlayed";
+import AccuracyRing from "@/components/stats/accuracyRing";
+import Login from "@/components/auth/Login";
+import { createClient } from "@/utils/supabase/client";
+import { User } from "@supabase/supabase-js";
+import {
+  deleteCategory,
+  getUserLibrary,
+  getSessionHistory,
+} from "@/utils/repository";
 
 function lastFinishedAtMs(
   sessionsByCategory: SessionsByCategory,
-  categoryId: string
+  categoryId: string,
 ): number {
   const sessions = sessionsByCategory[categoryId] ?? [];
   if (sessions.length === 0) return -Infinity; // never trained
@@ -23,52 +30,63 @@ function lastFinishedAtMs(
 }
 
 export default function Home() {
+  const [userLibrary, setUserLibrary] = useState<UserLibrary>();
+  const [sessionHistory, setSessionHistory] = useState<SessionsByCategory>({});
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    "default",
+  );
+  const [user, setUser] = useState<User | null>(null);
 
-  const [userLibrary, setUserLibrary] = useState<UserLibrary>()
-  const [sessionHistory, setSessionHistory] = useState<SessionsByCategory>({})
-  const [selectedCategory, setSelectedCategory] = useState<string | null>('default')
-  const [user, setUser] = useState<User | null>(null)
-
-  const supabase = createClient()
+  const supabase = createClient();
 
   //User data from Supabase
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-    }
-    fetchUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-    })
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     // Unsubscribe from auth state changes on unmount
-    return () => subscription.unsubscribe()
-  }, [supabase])
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   //User data from localStorage or Supabase
   useEffect(() => {
     async function fetchData() {
       if (user) {
-        await importLocalStorageToSupabase(supabase, user.id)
+        await importLocalStorageToSupabase(supabase, user.id);
       }
 
-      const userLibrary = await getUserLibrary(supabase, user)
-      const sessionHistory = await getSessionHistory(supabase, user)
-      setUserLibrary(userLibrary)
-      setSessionHistory(sessionHistory)
+      const userLibrary = await getUserLibrary(supabase, user);
+      const sessionHistory = await getSessionHistory(supabase, user);
+      setUserLibrary(userLibrary);
+      setSessionHistory(sessionHistory);
     }
-    fetchData()
+    fetchData();
   }, [user, supabase]);
 
   /**
    * Sorting category cards
    */
-  const sortedCategories = [...userLibrary?.library ?? []];
+  // const sortedCategories = [...(userLibrary?.library ?? [])];
+  const defaultCategories = (userLibrary?.library ?? []).filter(
+    (category) => category.category.visibility === "system",
+  );
+  const yourCategories = (userLibrary?.library ?? []).filter(
+    (category) => category.category.visibility === "private",
+  );
 
-  sortedCategories.sort((a, b) => {
+  yourCategories.sort((a, b) => {
     const nameTieBreak = () =>
       a.category.name.localeCompare(b.category.name, undefined, {
         sensitivity: "base",
@@ -110,51 +128,28 @@ export default function Home() {
   // todo: implement modal or dialog for confirmation instead of window.confirm
   const handleDeleteCategory = async (categoryId: string) => {
     if (window.confirm("Do you really want to delete this category?")) {
-      await deleteCategory(supabase, user, categoryId)
-      setUserLibrary(await getUserLibrary(supabase, user))
-      setSessionHistory(await getSessionHistory(supabase, user))
+      await deleteCategory(supabase, user, categoryId);
+      setUserLibrary(await getUserLibrary(supabase, user));
+      setSessionHistory(await getSessionHistory(supabase, user));
     }
-  }
+  };
 
   return (
-      <div className="p-4 max-w-7xl mx-auto space-y-4 mt-10">
-        <Login />
-        <h1 className="text-2xl font-bold">Welcome to the Backgammon Gym</h1>
+    <div className="p-4 max-w-7xl mx-auto space-y-4 mt-10">
+      <Login />
+      <h1 className="text-2xl font-bold">Welcome to the Backgammon Gym</h1>
 
-        <h2 className="text-lg font-bold">Pick a category and start training</h2>        
+      <h2 className="text-lg font-bold">Pick a category and start training</h2>
 
-        {/* Category Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-bold col-span-3">Default Categories</h3>
-          <div className="rounded-lg shadow-md p-4 bg-sky-50">
-            <h3 className="text-lg font-bold">Category 1</h3>
-            <p className="text-gray-600">10 positions</p>
-          </div>
-        </div>
+      {/* Default Category Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-lg font-bold col-span-3">Default Categories</h3>
 
-        {/* Filter categories */}
-        <select className="border border-gray-300 px-2 py-1 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:outline-none transition duration-150 ease-in-out mb-4 focus:ring-indigo-500 focus:border-indigo-500"
-        value={selectedCategory ?? 'default'}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedCategory(e.target.value)
-
-        }>
-          <option value="default">Default</option>
-          <option value="weakest">Weakest first</option>
-          <option value="longest">Longest untrained</option>
-          <option value="recently">Recently trained</option>
-          <option value="most">Most positions</option>
-        </select>
-
-        {/* Show the filtered/sorted categories */}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
-        <h3 className="text-lg font-bold col-span-3">Your Categories</h3>
-
-        {sortedCategories.map((categories) => {
-
-          const categoryId = categories.category.id
-          const sessions = sessionHistory[categoryId] ?? []
-          const avgScore = getCategoryAverageScore(sessionHistory, categoryId) ?? 0
+        {defaultCategories.map((categories) => {
+          const categoryId = categories.category.id;
+          const sessions = sessionHistory[categoryId] ?? [];
+          const avgScore =
+            getCategoryAverageScore(sessionHistory, categoryId) ?? 0;
 
           return (
             <div
@@ -165,7 +160,9 @@ export default function Home() {
                 href={`/board?categoryId=${categoryId}`}
                 className="block pr-7"
               >
-                <h3 className="text-lg font-bold">{categories.category.name}</h3>
+                <h3 className="text-lg font-bold">
+                  {categories.category.name}
+                </h3>
                 <p className="text-gray-600">{avgScore.toFixed(1)} / 6</p>
                 <div className="flex">
                   <div className="grid items-center justify-between">
@@ -176,9 +173,71 @@ export default function Home() {
                   <AccuracyRing score={avgScore} />
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-600">
+                    {categories.positions.length} positions
+                  </p>
+                  {/* last played component */}
+                  <LastPlayed lastPlayed={sessions[0]?.finishedAt ?? null} />
+                </div>
+              </Link>
+            </div>
+          );
+        })}
+      </div>
 
-                <div className="flex items-center justify-between" >
-                  <p className="text-gray-600">{categories.positions.length} positions</p>
+      {/* Filter categories */}
+      <select
+        className="border border-gray-300 px-2 py-1 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:outline-none transition duration-150 ease-in-out mb-4 focus:ring-indigo-500 focus:border-indigo-500"
+        value={selectedCategory ?? "default"}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+          setSelectedCategory(e.target.value)
+        }
+      >
+        <option value="default">Default</option>
+        <option value="weakest">Weakest first</option>
+        <option value="longest">Longest untrained</option>
+        <option value="recently">Recently trained</option>
+        <option value="most">Most positions</option>
+      </select>
+
+      {/* Show the filtered/sorted categories */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-lg font-bold col-span-3">Your Categories</h3>
+
+        {yourCategories.map((categories) => {
+          const categoryId = categories.category.id;
+          const sessions = sessionHistory[categoryId] ?? [];
+          const avgScore =
+            getCategoryAverageScore(sessionHistory, categoryId) ?? 0;
+
+          return (
+            <div
+              key={categoryId}
+              className="relative rounded-lg shadow-md p-4 mb-4 bg-sky-50"
+            >
+              <Link
+                href={`/board?categoryId=${categoryId}`}
+                className="block pr-7"
+              >
+                <h3 className="text-lg font-bold">
+                  {categories.category.name}
+                </h3>
+                <p className="text-gray-600">{avgScore.toFixed(1)} / 6</p>
+                <div className="flex">
+                  <div className="grid items-center justify-between">
+                    <p className="text-gray-600">avg. last 10</p>
+                    {/* dots component for avg. last 10 */}
+                    <RatingDots rating={sessions} />
+                  </div>
+                  <AccuracyRing score={avgScore} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-600">
+                    {categories.positions.length} positions
+                  </p>
                   {/* last played component */}
                   <LastPlayed lastPlayed={sessions[0]?.finishedAt ?? null} />
                 </div>
@@ -192,19 +251,19 @@ export default function Home() {
                 X
               </button>
             </div>
-          )
+          );
         })}
-        
+
         {/* save position card */}
-        <Link href='/parser'>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 cursor-pointer">
-          <div className="rounded-lg shadow-md p-4 bg-sky-50">
-            <h3 className="text-lg font-bold">+</h3>
-            <p className="text-gray-600">Save positions</p>
+        <Link href="/parser">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 cursor-pointer">
+            <div className="rounded-lg shadow-md p-4 bg-green-50">
+              <h3 className="text-lg font-bold">+</h3>
+              <p className="text-gray-600">Save positions</p>
+            </div>
           </div>
-        </div>
         </Link>
       </div>
-      </div>
-  )
+    </div>
+  );
 }

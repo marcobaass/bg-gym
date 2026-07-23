@@ -1,8 +1,15 @@
-export type Color = 'White' | 'Black'
+export type Color = "White" | "Black";
 
-export type CubeAction = 'No Double' | 'Double/Take' | 'Double/Pass' | 'Recube/Take' | 'Recube/Pass' | 'Take' | 'Pass';
+export type CubeAction =
+  | "No Double"
+  | "Double/Take"
+  | "Double/Pass"
+  | "Recube/Take"
+  | "Recube/Pass"
+  | "Take"
+  | "Pass";
 
-export type AnalysisType = 'Move' | 'Cube' | 'Unknown'
+export type AnalysisType = "Move" | "Cube" | "Unknown";
 
 export interface Point {
   id: number;
@@ -47,11 +54,11 @@ export interface BestCubeAction {
 }
 
 export type CubeDecision =
-  | 'No Double'
-  | 'Double/Take'
-  | 'Double/Pass'
-  | 'Too good to double';
-  
+  | "No Double"
+  | "Double/Take"
+  | "Double/Pass"
+  | "Too good to double";
+
 export interface ParsedCubeDecisionOption {
   decision: CubeDecision;
   equity: number;
@@ -68,19 +75,19 @@ export type CubeOptionRow = {
   equity: number;
   equityDiff: number;
   isUserOption: boolean;
-}
+};
 
 export interface Position {
   analysisType: string;
   barWhite: number;
   barBlack: number;
   bestMoves: Move[];
-  cubeActions: (CubeActions | BestCubeAction) [];
+  cubeActions: (CubeActions | BestCubeAction)[];
   diceRoll: number;
   playerToPlay: Color;
   points: Point[];
   cubeValue: number;
-  cubeOwner: 'White' | 'Black' | 'none';
+  cubeOwner: "White" | "Black" | "none";
   pipCountWhite: number;
   pipCountBlack: number;
   scoreWhite: number;
@@ -94,6 +101,7 @@ export interface Position {
 export interface Category {
   name: string;
   id: string;
+  visibility: "private" | "system" | "public";
 }
 
 export interface PositionCategory {
@@ -103,7 +111,7 @@ export interface PositionCategory {
 
 export type UserLibrary = {
   library: PositionCategory[];
-}
+};
 
 // Session stats interface
 export interface CategorySession {

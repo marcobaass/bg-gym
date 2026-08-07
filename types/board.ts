@@ -53,11 +53,7 @@ export interface BestCubeAction {
   bestAction: string;
 }
 
-export type CubeDecision =
-  | "No Double"
-  | "Double/Take"
-  | "Double/Pass"
-  | "Too good to double";
+export type CubeDecision = "No Double" | "Double/Take" | "Double/Pass";
 
 export interface ParsedCubeDecisionOption {
   decision: CubeDecision;

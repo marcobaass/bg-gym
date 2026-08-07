@@ -36,7 +36,6 @@ const cubeDecisions: CubeDecision[] = [
   "No Double",
   "Double/Take",
   "Double/Pass",
-  "Too good to double",
 ];
 
 export default function BoardPageClient() {
@@ -249,20 +248,27 @@ export default function BoardPageClient() {
               onCheckerClick={handleCheckerClick}
               onDestinationClick={handleDestinationClick}
             />
-            {current?.analysisType === "Move" && (
+            {(current?.analysisType === "Cube" ||
+              current?.analysisType === "Move") && (
               <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
-                <button
-                  className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"
-                  onClick={() => dispatch({ type: "UNDO_MOVE" })}
-                  disabled={ui.moveHistory.length === 0}
-                >
-                  ↩
-                </button>
+                {current?.analysisType === "Move" && (
+                  <button
+                    className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"
+                    onClick={() => dispatch({ type: "UNDO_MOVE" })}
+                    disabled={ui.moveHistory.length === 0}
+                  >
+                    ↩
+                  </button>
+                )}
                 <SubmitButton
                   current={current}
                   handleSubmitMove={handleSubmitMove}
                   handleSubmitCubeDecision={handleSubmitCubeDecision}
-                  disabled={ui.remainingDice.length > 0}
+                  disabled={
+                    current?.analysisType === "Move"
+                      ? ui.remainingDice.length > 0
+                      : cubeDecision === null
+                  }
                 />
               </div>
             )}

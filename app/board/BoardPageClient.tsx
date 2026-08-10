@@ -13,15 +13,12 @@ import { getAvailableMoves, isValidPoint } from "@/utils/move-utils";
 import { uiReducer, INITIAL_UI_STATE } from "@/utils/uiReducer";
 import { useState, useEffect, useReducer } from "react";
 import { compareWithBestMoves } from "@/utils/compareBestMoves-utils";
-import ResultsModal from "@/components/ResultsModal";
 import { pointsFromEquityDiff } from "@/utils/scoring-utils";
 import { shufflePositions } from "@/utils/userLibrary";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import useBoardDestinationClick from "./_hooks/useBoardDestinationClick";
 
-import PositionHeader from "@/components/board/trainer/PositionHeader";
-import NavigationControls from "@/components/board/trainer/NavigationControls";
 import CubeDecisionButtons from "@/components/board/trainer/CubeDecisionButtons";
 import SubmitButton from "@/components/board/trainer/SubmitButton";
 import useBoardSubmitCubeDecision from "./_hooks/useBoardSubmitCubeDecision";
@@ -29,6 +26,7 @@ import { getUserLibrary, saveCategorySession } from "@/utils/repository";
 
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
+import ResultsSidePanel from "@/components/ResultsSidePanel";
 
 const supabase = createClient();
 
@@ -47,9 +45,8 @@ export default function BoardPageClient() {
 
   const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
   const [ui, dispatch] = useReducer(uiReducer, INITIAL_UI_STATE);
-  const [resultsModal, setShowResultsModal] = useState<boolean>(false);
   const [result, setResult] = useState<Move | undefined>(undefined);
-
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const userColor = ui.currentPosition?.playerToPlay ?? "White";
   const [cubeDecision, setCubeDecision] = useState<CubeDecision | null>(null);
 
@@ -104,28 +101,19 @@ export default function BoardPageClient() {
     dispatch({ type: "POSITION_CHANGED", position });
   }, [currentPositionIndex, positionData]);
 
-  // const handlePreviousPosition = () => {
-  //   setShowResultsModal(false)
-  //   setCubeDecision(null)
-  //   setCubeOptions([])
-  //   setCubePoints(0)
-  //   setCurrentPositionIndex(Math.max(0, currentPositionIndex - 1))
-  // }
-
   const handleNextPosition = () => {
-    setShowResultsModal(false);
     setCubeDecision(null);
     setCubeOptions([]);
     setCubePoints(0);
     setCurrentPositionIndex(
       Math.min(positionData.length - 1, currentPositionIndex + 1),
     );
+    setIsConfirmed(false);
   };
 
   const positionsPlayed = positionData.length;
 
   const handleSessionDone = async () => {
-    setShowResultsModal(false);
     setCubeDecision(null);
     setCubeOptions([]);
     setCubePoints(0);
@@ -190,7 +178,7 @@ export default function BoardPageClient() {
 
       dispatch({ type: "ADD_SCORE", score: pointsForMove });
       setResult(comparisonResult as Move);
-      setShowResultsModal(true);
+      setIsConfirmed(true);
     } catch (error) {
       console.error("Error in handleSubmitMove:", error);
     }
@@ -202,7 +190,7 @@ export default function BoardPageClient() {
     cubeDecision,
     setCubePoints,
     setCubeOptions,
-    setShowResultsModal,
+    setIsConfirmed,
     dispatch,
   });
 
@@ -210,86 +198,83 @@ export default function BoardPageClient() {
 
   return (
     <>
-      <div className="text-center mb-4 text-2xl font-bold">
-        Welcome to the Training
-      </div>
-
       {positionData.length > 0 ? (
-        <>
-          <div className="text-center mb-4">
-            <PositionHeader
+        <div className="flex h-dvh w-full flex-row">
+          {/* Results Side Panel */}
+          <aside className="min-w-[280px] flex-1">
+            <ResultsSidePanel
+              result={result}
+              bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
               currentPositionIndex={currentPositionIndex}
               positionData={positionData}
+              score={ui.score}
+              totalScore={ui.totalScore}
+              cubeOptions={cubeOptions}
+              cubePoints={cubePoints}
+              handleNextPosition={handleNextPosition}
+              handleSessionDone={handleSessionDone}
+              isConfirmed={isConfirmed}
             />
-            {/* <NavigationControls
-              onPrevious={handlePreviousPosition}
-              onNext={handleNextPosition}
-              canGoPrevious={currentPositionIndex > 0}
-              canGoNext={currentPositionIndex < positionData.length - 1}
-            /> */}
-            <div className="flex items-center justify-center gap-2">
-              <CubeDecisionButtons
-                isCubePosition={isCubePosition}
-                cubeDecisions={cubeDecisions}
-                setCubeDecision={setCubeDecision}
-                cubeDecision={cubeDecision}
-                userColor={userColor}
-                isRedouble={isRedouble}
-              />
-            </div>
-          </div>
+          </aside>
 
-          <div className="relative @container">
-            <BoardRenderer
-              positionData={ui.currentPosition}
-              selectedPoint={ui.selectedPoint}
-              availableMoves={ui.availableMoves}
-              remainingDice={ui.remainingDice}
-              onCheckerClick={handleCheckerClick}
-              onDestinationClick={handleDestinationClick}
-            />
-            {(current?.analysisType === "Cube" ||
-              current?.analysisType === "Move") && (
-              <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
-                {current?.analysisType === "Move" && (
-                  <button
-                    className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"
-                    onClick={() => dispatch({ type: "UNDO_MOVE" })}
-                    disabled={ui.moveHistory.length === 0}
-                  >
-                    ↩
-                  </button>
-                )}
-                <SubmitButton
-                  current={current}
-                  handleSubmitMove={handleSubmitMove}
-                  handleSubmitCubeDecision={handleSubmitCubeDecision}
-                  disabled={
-                    current?.analysisType === "Move"
-                      ? ui.remainingDice.length > 0
-                      : cubeDecision === null
-                  }
+          {/* Board */}
+          <div
+            className="flex h-dvh shrink-0 flex-col"
+            style={{
+              width: "min(80vw, calc(100svh * 5 / 4), calc(100vw - 380px))",
+            }}
+          >
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2">
+                <CubeDecisionButtons
+                  isCubePosition={isCubePosition}
+                  cubeDecisions={cubeDecisions}
+                  setCubeDecision={setCubeDecision}
+                  cubeDecision={cubeDecision}
+                  userColor={userColor}
+                  isRedouble={isRedouble}
                 />
               </div>
-            )}
+            </div>
+            <div className="relative w-full max-h-full aspect-[5/4] @container">
+              <BoardRenderer
+                positionData={ui.currentPosition}
+                selectedPoint={ui.selectedPoint}
+                availableMoves={ui.availableMoves}
+                remainingDice={ui.remainingDice}
+                onCheckerClick={handleCheckerClick}
+                onDestinationClick={handleDestinationClick}
+              />
+              {(current?.analysisType === "Cube" ||
+                current?.analysisType === "Move") && (
+                <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
+                  {current?.analysisType === "Move" && (
+                    <button
+                      className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"
+                      onClick={() => dispatch({ type: "UNDO_MOVE" })}
+                      disabled={ui.moveHistory.length === 0 || isConfirmed}
+                    >
+                      ↩
+                    </button>
+                  )}
+                  <SubmitButton
+                    current={current}
+                    handleSubmitMove={handleSubmitMove}
+                    handleSubmitCubeDecision={handleSubmitCubeDecision}
+                    disabled={
+                      isConfirmed ||
+                      (current?.analysisType === "Move"
+                        ? ui.remainingDice.length > 0
+                        : cubeDecision === null)
+                    }
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </>
+        </div>
       ) : (
         <div>No positions available</div>
-      )}
-      {resultsModal && (
-        <ResultsModal
-          result={result}
-          bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
-          currentPositionIndex={currentPositionIndex}
-          positionData={positionData}
-          score={ui.score}
-          totalScore={ui.totalScore}
-          cubeOptions={cubeOptions}
-          cubePoints={cubePoints}
-          handleNextPosition={handleNextPosition}
-          handleSessionDone={handleSessionDone}
-        />
       )}
     </>
   );

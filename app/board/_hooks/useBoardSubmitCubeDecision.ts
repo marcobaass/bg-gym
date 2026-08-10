@@ -12,7 +12,7 @@ export default function useBoardSubmitCubeDecision({
   cubeDecision,
   setCubePoints,
   setCubeOptions,
-  setShowResultsModal,
+  setIsConfirmed,
   dispatch,
 }: {
   positionData: Position[];
@@ -21,7 +21,8 @@ export default function useBoardSubmitCubeDecision({
   setCubePoints: (points: number) => void;
   dispatch: Dispatch<UiAction>;
   setCubeOptions: (options: CubeOptionRow[]) => void;
-  setShowResultsModal: (show: boolean) => void;
+
+  setIsConfirmed: (isConfirmed: boolean) => void;
 }) {
   const handleSubmitCubeDecision = () => {
     if (positionData[currentPositionIndex].analysisType !== "Cube") {
@@ -80,7 +81,7 @@ export default function useBoardSubmitCubeDecision({
     });
 
     setCubeOptions(rows);
-    setShowResultsModal(true);
+    setIsConfirmed(true);
   };
 
   return { handleSubmitCubeDecision };

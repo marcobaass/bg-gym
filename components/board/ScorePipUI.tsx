@@ -59,6 +59,9 @@ export default function DoublingCube({
           >
             {positionData.scoreWhite}
           </tspan>
+          <tspan dy="0" fontSize={POINT_WIDTH * 0.25}>
+            {` / ${positionData.matchLength}`}
+          </tspan>
         </text>
       </svg>
 
@@ -68,7 +71,6 @@ export default function DoublingCube({
           x={x + POINT_WIDTH / 2}
           y={yBlack + POINT_WIDTH}
           textAnchor="middle"
-          dominantBaseline="middle"
           fill="white"
           fontWeight="bold"
           fontFamily="arial"
@@ -79,14 +81,17 @@ export default function DoublingCube({
             fontSize={POINT_WIDTH * 0.6}
           >
             {positionData.scoreBlack}
-            <tspan
-              x={x + POINT_WIDTH / 2}
-              dy={POINT_WIDTH * 0.5}
-              fontSize={POINT_WIDTH * 0.2}
-            >
-              {positionData.pipCountBlack} (
-              {positionData.pipCountBlack - positionData.pipCountWhite})
-            </tspan>
+          </tspan>
+          <tspan dy="0" fontSize={POINT_WIDTH * 0.25}>
+            {` / ${positionData.matchLength}`}
+          </tspan>
+          <tspan
+            x={x + POINT_WIDTH / 2}
+            dy={POINT_WIDTH * 0.5}
+            fontSize={POINT_WIDTH * 0.2}
+          >
+            {positionData.pipCountBlack} (
+            {positionData.pipCountBlack - positionData.pipCountWhite})
           </tspan>
         </text>
       </svg>

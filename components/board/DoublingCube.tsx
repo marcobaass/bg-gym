@@ -34,9 +34,9 @@ export default function DoublingCube({
   let y = null;
 
   if (cubeOwner === "White") {
-    y = BOARD_HEIGHT - POINT_WIDTH / 2 - FRAME_WIDTH / 2;
+    y = BOARD_HEIGHT - POINT_WIDTH * 2.5 - FRAME_WIDTH / 2;
   } else if (cubeOwner === "Black") {
-    y = FRAME_WIDTH;
+    y = FRAME_WIDTH + POINT_WIDTH * 2.5 - FRAME_WIDTH * 2;
   } else {
     y = BOARD_HEIGHT / 2 - FRAME_WIDTH / 2;
   }

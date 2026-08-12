@@ -42,6 +42,7 @@ export interface Move {
   rank: number;
   move: number[][];
   equity: number;
+  engine?: string;
 }
 
 export interface CubeActions {
@@ -75,6 +76,7 @@ export type CubeOptionRow = {
 
 export interface Position {
   analysisType: string;
+  analysisEngine?: string;
   barWhite: number;
   barBlack: number;
   bestMoves: Move[];

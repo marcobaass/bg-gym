@@ -52,52 +52,62 @@ export default function ResultsSidePanel({
         </div>
 
         {isConfirmed && (
-          <ul>
-            {cubeOptions && cubeOptions.length > 0
-              ? cubeOptions.map((opt) => {
-                  return (
-                    <li
-                      key={crypto.randomUUID()}
-                      className="flex gap-3 rounded-md p-0.5"
-                      style={{
-                        backgroundColor: opt.isUserOption
-                          ? getMistakeColor(opt.equityDiff)
-                          : undefined,
-                      }}
-                    >
-                      <p>{opt.label}</p>
-                      <p>{opt.equityDiff.toFixed(3)}</p>
-                    </li>
-                  );
-                })
-              : bestMoves.map((bestMove) => {
-                  const isUserMove = bestMove.rank === result?.rank;
-                  const equityDiff = bestMoves[0].equity - bestMove.equity;
-                  return (
-                    <li
-                      key={bestMove.rank}
-                      className="flex gap-3 rounded-md p-0.5"
-                      style={{
-                        backgroundColor: isUserMove
-                          ? getMistakeColor(equityDiff)
-                          : undefined,
-                      }}
-                    >
-                      <p>{bestMove.rank}.</p>
-                      {bestMove.move
-                        .map((move) => {
-                          const from = move[0] < 0 ? "Bar" : move[0];
-                          const to = move[1];
-                          return `${from}/${to}`;
-                        })
-                        .join(", ")}
-                      <p>
-                        {(bestMove.equity - bestMoves[0].equity).toFixed(3)}
-                      </p>
-                    </li>
-                  );
-                })}
-          </ul>
+          <>
+            {cubeOptions &&
+              cubeOptions.length > 0 &&
+              currentPosition?.analysisEngine && (
+                <p className="text-sm mb-2">
+                  Analysis: {currentPosition.analysisEngine}
+                </p>
+              )}
+            <ul>
+              {cubeOptions && cubeOptions.length > 0
+                ? cubeOptions.map((opt) => {
+                    return (
+                      <li
+                        key={crypto.randomUUID()}
+                        className="flex gap-3 rounded-md p-0.5"
+                        style={{
+                          backgroundColor: opt.isUserOption
+                            ? getMistakeColor(opt.equityDiff)
+                            : undefined,
+                        }}
+                      >
+                        <p>{opt.label}</p>
+                        <p>{opt.equityDiff.toFixed(3)}</p>
+                      </li>
+                    );
+                  })
+                : bestMoves.map((bestMove) => {
+                    const isUserMove = bestMove.rank === result?.rank;
+                    const equityDiff = bestMoves[0].equity - bestMove.equity;
+                    return (
+                      <li
+                        key={bestMove.rank}
+                        className="flex gap-3 rounded-md p-0.5"
+                        style={{
+                          backgroundColor: isUserMove
+                            ? getMistakeColor(equityDiff)
+                            : undefined,
+                        }}
+                      >
+                        <p>{bestMove.rank}.</p>
+                        {bestMove.move
+                          .map((move) => {
+                            const from = move[0] < 0 ? "Bar" : move[0];
+                            const to = move[1];
+                            return `${from}/${to}`;
+                          })
+                          .join(", ")}
+                        <p>
+                          {(bestMove.equity - bestMoves[0].equity).toFixed(3)}
+                        </p>
+                        <p>{bestMove.engine ?? ""}</p>
+                      </li>
+                    );
+                  })}
+            </ul>
+          </>
         )}
         {bestActionText && isConfirmed && <p>Best Choice: {bestActionText}</p>}
         {isConfirmed && (

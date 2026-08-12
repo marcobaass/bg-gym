@@ -1,8 +1,15 @@
-import { Position, CubeActions, AnalysisType, Point, Color, Move, BestCubeAction } from "@/types/board";
+import {
+  Position,
+  CubeActions,
+  AnalysisType,
+  Point,
+  Color,
+  Move,
+  BestCubeAction,
+} from "@/types/board";
 
-export function createBoardStateFromXgid(positionData:string): Position {
-
-  const analysisType = getAnalysisType(positionData)
+export function createBoardStateFromXgid(positionData: string): Position {
+  const analysisType = getAnalysisType(positionData);
 
   const xgidParts = positionData.slice(5).split(":");
 
@@ -20,20 +27,20 @@ export function createBoardStateFromXgid(positionData:string): Position {
    * [9]: Max Cube 8 Maximum value of the cube (2^value so here 2^8=256)
    */
 
-  const playerToPlay = xgidParts[3] === '1' ? 'White' : 'Black'
+  const playerToPlay = xgidParts[3] === "1" ? "White" : "Black";
 
   // Initializing the points array (0: White on Bar, 1-24: Checker Positions, 25: Black on Bar)
   const points: Point[] = Array.from({ length: 26 }, (_, i) => ({
     id: i,
     owner: undefined,
-    count: 0
+    count: 0,
   }));
 
-  const positionPart = xgidParts[0]
-  let pointIndex = 1
+  const positionPart = xgidParts[0];
+  let pointIndex = 1;
 
-  let totalWhiteOnBoard = 0
-  let totalBlackOnBoard = 0
+  let totalWhiteOnBoard = 0;
+  let totalBlackOnBoard = 0;
 
   for (let i = 0; i < positionPart.length && i < 26; i++) {
     const char = positionPart[i];
@@ -44,7 +51,7 @@ export function createBoardStateFromXgid(positionData:string): Position {
     // Lowercase = Black (O), Uppercase = White (X)
     let owner: Color | undefined = undefined;
     if (count > 0) {
-      owner = char === charUpper ? 'White' : 'Black';
+      owner = char === charUpper ? "White" : "Black";
     }
 
     if (i === 0) {
@@ -61,52 +68,61 @@ export function createBoardStateFromXgid(positionData:string): Position {
       points[pointIndex].owner = owner;
       pointIndex++;
     }
-    if (owner === 'White') {
-        totalWhiteOnBoard += count;
-    } else if (owner === 'Black') {
-        totalBlackOnBoard += count;
+    if (owner === "White") {
+      totalWhiteOnBoard += count;
+    } else if (owner === "Black") {
+      totalBlackOnBoard += count;
     }
   }
 
   // Extracting values
-  const diceRoll = parseInt(xgidParts[4])
-  const scoreWhite = parseInt(xgidParts[5])
-  const scoreBlack = parseInt(xgidParts[6])
-  const crawford = parseInt(xgidParts[7]) === 1
-  const matchLength = parseInt(xgidParts[8])
-  const barWhite = points[25].count
-  const barBlack = points[0].count
-  const boardPoints = points.slice(1, 25)
-  const cubeValue = 1 << +xgidParts[1]
-  const cubeOwner = ['Black', 'none', 'White'][parseInt(xgidParts[2]) + 1] as 'Black' | 'none' | 'White';
+  const diceRoll = parseInt(xgidParts[4]);
+  const scoreWhite = parseInt(xgidParts[5]);
+  const scoreBlack = parseInt(xgidParts[6]);
+  const crawford = parseInt(xgidParts[7]) === 1;
+  const matchLength = parseInt(xgidParts[8]);
+  const barWhite = points[25].count;
+  const barBlack = points[0].count;
+  const boardPoints = points.slice(1, 25);
+  const cubeValue = 1 << +xgidParts[1];
+  const cubeOwner = ["Black", "none", "White"][parseInt(xgidParts[2]) + 1] as
+    | "Black"
+    | "none"
+    | "White";
 
   //Born off checkers
-  const whiteOff = 15 - totalWhiteOnBoard
-  const blackOff = 15 - totalBlackOnBoard
+  const whiteOff = 15 - totalWhiteOnBoard;
+  const blackOff = 15 - totalBlackOnBoard;
 
   // Pip count
-  let pipCountWhite = 0
-  let pipCountBlack = 0
+  let pipCountWhite = 0;
+  let pipCountBlack = 0;
   const pipMatch = positionData.match(/Pip count\s+X:\s*(\d+)\s+O:\s*(\d+)/);
   if (pipMatch) {
-    pipCountWhite = parseInt(pipMatch[1])
-    pipCountBlack = parseInt(pipMatch[2])
+    pipCountWhite = parseInt(pipMatch[1]);
+    pipCountBlack = parseInt(pipMatch[2]);
   }
 
   // Best moves or cube actions by equity
-  let bestMoves: Move[] = []
-  if (analysisType==='Move') {
-    bestMoves = moveAnalysis(positionData, playerToPlay)
+  let bestMoves: Move[] = [];
+  if (analysisType === "Move") {
+    bestMoves = moveAnalysis(positionData, playerToPlay);
   }
 
-  let cubeActions: (CubeActions | BestCubeAction)[] = []
-  if (analysisType==='Cube') {
-    cubeActions = cubeAnalysis(positionData)
+  let cubeActions: (CubeActions | BestCubeAction)[] = [];
+  if (analysisType === "Cube") {
+    cubeActions = cubeAnalysis(positionData);
   }
+
+  const analysisEngine =
+    analysisType === "Cube"
+      ? parseAnalysisEngine(positionData)
+      : bestMoves[0]?.engine;
 
   // Constructing Position Object
   const position: Position = {
     analysisType,
+    analysisEngine,
     barWhite,
     barBlack,
     bestMoves,
@@ -123,59 +139,50 @@ export function createBoardStateFromXgid(positionData:string): Position {
     crawford,
     matchLength,
     whiteOff,
-    blackOff
-  }
+    blackOff,
+  };
 
-  return position as Position
+  return position as Position;
 }
-
-
-
 
 // Notation for numbers of checkers on a certain position
-const ENCODING_MAP: {[key: string]: number} = {
-  '-': 0,
-  'A': 1,
-  'B': 2,
-  'C': 3,
-  'D': 4,
-  'E': 5,
-  'F': 6,
-  'G': 7,
-  'H': 8,
-  'I': 9,
-  'J': 10,
-  'K': 11,
-  'L': 12,
-  'M': 13,
-  'N': 14,
-  'O': 15,
-}
+const ENCODING_MAP: { [key: string]: number } = {
+  "-": 0,
+  A: 1,
+  B: 2,
+  C: 3,
+  D: 4,
+  E: 5,
+  F: 6,
+  G: 7,
+  H: 8,
+  I: 9,
+  J: 10,
+  K: 11,
+  L: 12,
+  M: 13,
+  N: 14,
+  O: 15,
+};
 
 // Determine weather it's move or cube analysis
 function getAnalysisType(xgid: string): AnalysisType {
-
   // Checking for cube decision signatures (CR:Take, CR:Pass)
   if (xgid.includes("cube action")) {
-    return 'Cube';
+    return "Cube";
   }
 
   // Checking for move signatures
   if (xgid.includes("to play")) {
-    return 'Move';
+    return "Move";
   }
 
-  return 'Unknown'
+  return "Unknown";
 }
 
-
-
-
-
-
 function moveAnalysis(xgid: string, player: string): Move[] {
-
-  const regex = /^\s*(\d+)\.\s+.*?\s+([\d\/\s\*\(\)Bar]+)\s+eq:([+\-]?\d+,\d+)/gm;
+  const regex =
+    /^\s*(\d+)\.\s+(.+?)\s+((?:Bar|\d+)\/[\d\/\s\*\(\)Bar]+)\s+eq:([+\-]?\d+,\d+)/gm;
 
   const bestMoves: Move[] = [];
   let match;
@@ -183,42 +190,50 @@ function moveAnalysis(xgid: string, player: string): Move[] {
   while ((match = regex.exec(xgid)) !== null) {
     bestMoves.push({
       rank: parseInt(match[1]),
-      move: stringToNums(match[2].trim(), player),
-      equity: parseFloat(match[3].replace(',', '.'))
+      engine: match[2].trim(),
+      move: stringToNums(match[3].trim(), player),
+      equity: parseFloat(match[4].replace(",", ".")),
     });
   }
 
-  return bestMoves
+  return bestMoves;
 }
 
 function stringToNums(str: string, player: string) {
-  const result: number[][] = []
+  const result: number[][] = [];
 
-  const parts = str.trim().split(/\s+/)
+  const parts = str.trim().split(/\s+/);
 
   for (const part of parts) {
     // Check for (n) multiplier at the end (e.g., "23/18(2)")
-    const multiplierMatch = part.match(/\((\d+)\)$/)
-    const count = multiplierMatch ? parseInt(multiplierMatch[1]) : 1
+    const multiplierMatch = part.match(/\((\d+)\)$/);
+    const count = multiplierMatch ? parseInt(multiplierMatch[1]) : 1;
 
     // Remove the (n) to get clean move
-    const cleanPart = part.replace(/\(\d+\)$/, '')
-    const [from, to] = cleanPart.split("/")
+    const cleanPart = part.replace(/\(\d+\)$/, "");
+    const [from, to] = cleanPart.split("/");
 
     const fromNum =
-      from === 'Bar'
-        ? player === 'White' ? -1 : -2
-        : Number(from)
+      from === "Bar" ? (player === "White" ? -1 : -2) : Number(from);
 
-    const toNum = parseInt(to)
+    const toNum = parseInt(to);
 
     // Push the move 'count' times
     for (let i = 0; i < count; i++) {
-      result.push([fromNum, toNum])
+      result.push([fromNum, toNum]);
     }
   }
 
   return result;
+}
+
+function parseAnalysisEngine(xgid: string): string | undefined {
+  if (xgid.includes("XG Roller++")) return "XG Roller++";
+  if (xgid.includes("XG Roller+")) return "XG Roller+";
+  if (/\bXG Roller\b/.test(xgid)) return "XG Roller";
+  const ply = xgid.match(/\b(\d+-ply)\b/);
+  if (ply) return ply[1];
+  return undefined;
 }
 
 function cubeAnalysis(xgid: string): (CubeActions | BestCubeAction)[] {
@@ -226,7 +241,7 @@ function cubeAnalysis(xgid: string): (CubeActions | BestCubeAction)[] {
 
   // 1) Extract only the "Cubeful Equities" block
   const cubefulMatch = xgid.match(
-    /Cubeful Equities:\s*([\s\S]*?)(?:\n\s*\n|\n\n|$)/i
+    /Cubeful Equities:\s*([\s\S]*?)(?:\n\s*\n|\n\n|$)/i,
   );
 
   if (!cubefulMatch) {
@@ -240,16 +255,16 @@ function cubeAnalysis(xgid: string): (CubeActions | BestCubeAction)[] {
   //    - Double/Take / Redouble/Take
   //    - Double/Pass / Redouble/Pass
   const cubeActionsRegex =
-    /^\s*(No (?:double|redouble)|(?:Re)?double\/Take|(?:Re)?double\/Pass):\s*([+\-]?\d+,\d+)/gmi;
+    /^\s*(No (?:double|redouble)|(?:Re)?double\/Take|(?:Re)?double\/Pass):\s*([+\-]?\d+,\d+)/gim;
 
   let match: RegExpExecArray | null;
   while ((match = cubeActionsRegex.exec(cubefulSection)) !== null) {
-    const label = match[1];      // e.g. "No double", "No redouble", "Double/Take", "Redouble/Pass"
-    const rawEquity = match[2];  // e.g. "+0,851"
+    const label = match[1]; // e.g. "No double", "No redouble", "Double/Take", "Redouble/Pass"
+    const rawEquity = match[2]; // e.g. "+0,851"
 
     cubeActions.push({
       action: label,
-      equity: parseFloat(rawEquity.replace(',', '.')),
+      equity: parseFloat(rawEquity.replace(",", ".")),
     });
   }
 

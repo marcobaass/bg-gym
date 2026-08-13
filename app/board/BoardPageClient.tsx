@@ -6,6 +6,7 @@ import {
   Move,
   CubeDecision,
   CubeOptionRow,
+  Category,
   CategorySession,
 } from "@/types/board";
 import { Color } from "@/types/board";
@@ -22,7 +23,13 @@ import useBoardDestinationClick from "./_hooks/useBoardDestinationClick";
 import CubeDecisionButtons from "@/components/board/trainer/CubeDecisionButtons";
 import SubmitButton from "@/components/board/trainer/SubmitButton";
 import useBoardSubmitCubeDecision from "./_hooks/useBoardSubmitCubeDecision";
-import { getUserLibrary, saveCategorySession } from "@/utils/repository";
+import {
+  getUserLibrary,
+  saveCategorySession,
+  movePosition,
+  deletePosition,
+  deleteCategory,
+} from "@/utils/repository";
 
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -58,6 +65,8 @@ export default function BoardPageClient() {
 
   const [user, setUser] = useState<User | null>(null);
 
+  const [categories, setCategories] = useState<Category[]>([]);
+
   //User data from Supabase
   useEffect(() => {
     const fetchUser = async () => {
@@ -87,6 +96,10 @@ export default function BoardPageClient() {
         userLibrary.library.find(
           (category) => category.category.id === searchParamsCategoryId,
         )?.positions ?? [];
+      const newCategorys = userLibrary.library.map(
+        (category) => category.category,
+      );
+      setCategories(newCategorys);
       const shuffled = [...categoryPositions];
       const shuffledPositions = shufflePositions(shuffled);
       setPositionData(shuffledPositions);
@@ -194,6 +207,106 @@ export default function BoardPageClient() {
     dispatch,
   });
 
+  // ------------------------------------ Handler for position actions ------------------------------------
+
+  const getRemainingPositionCount = async (categoryId: string) => {
+    const userLibrary = await getUserLibrary(supabase, user);
+    const categoryPositions =
+      userLibrary.library.find(
+        (category) => category.category.id === categoryId,
+      )?.positions.length ?? 0;
+    return categoryPositions;
+  };
+
+  const handleMovePosition = async (targetCategoryId: string) => {
+    if (!targetCategoryId) return;
+    const current = positionData[currentPositionIndex] ?? null;
+    if (!current) return;
+    const currentId = current.id;
+    if (
+      !currentId ||
+      !searchParamsCategoryId ||
+      searchParamsCategoryId === targetCategoryId
+    )
+      return;
+
+    const success = await movePosition(
+      supabase,
+      user,
+      searchParamsCategoryId,
+      targetCategoryId,
+      currentId,
+    );
+
+    if (!success) {
+      alert("Could not move position.");
+      return;
+    }
+
+    const remainingPositionCount = await getRemainingPositionCount(
+      searchParamsCategoryId,
+    );
+    const newPositionData = positionData.filter(
+      (position) => position.id !== currentId,
+    );
+    if (remainingPositionCount === 0) {
+      await deleteCategory(supabase, user, searchParamsCategoryId);
+      router.push("/");
+      return;
+    } else if (currentPositionIndex >= newPositionData.length) {
+      setCurrentPositionIndex(newPositionData.length - 1);
+    }
+
+    // Clean up the UI
+    setPositionData(newPositionData);
+    setCubeDecision(null);
+    setCubeOptions([]);
+    setCubePoints(0);
+    setIsConfirmed(false);
+    setResult(undefined);
+  };
+
+  const handleDeletePosition = async () => {
+    const current = positionData[currentPositionIndex] ?? null;
+    if (!current) return;
+    const currentId = current.id;
+    if (!currentId) return;
+    if (!searchParamsCategoryId) return;
+
+    const success = await deletePosition(
+      supabase,
+      user,
+      searchParamsCategoryId,
+      currentId,
+    );
+    if (!success) {
+      alert("Could not delete position.");
+      return;
+    }
+
+    const remainingPositionCount = await getRemainingPositionCount(
+      searchParamsCategoryId,
+    );
+    const newPositionData = positionData.filter(
+      (position) => position.id !== currentId,
+    );
+    if (remainingPositionCount === 0) {
+      await deleteCategory(supabase, user, searchParamsCategoryId);
+      router.push("/");
+      return;
+    } else if (currentPositionIndex >= newPositionData.length) {
+      setCurrentPositionIndex(newPositionData.length - 1);
+    }
+
+    // Clean up the UI
+    setPositionData(newPositionData);
+    setCubeDecision(null);
+    setCubeOptions([]);
+    setCubePoints(0);
+    setIsConfirmed(false);
+    setResult(undefined);
+  };
+
   const isCubePosition = current?.analysisType === "Cube";
 
   return (
@@ -214,6 +327,10 @@ export default function BoardPageClient() {
               handleNextPosition={handleNextPosition}
               handleSessionDone={handleSessionDone}
               isConfirmed={isConfirmed}
+              categories={categories}
+              currentCategoryId={searchParamsCategoryId}
+              onMovePosition={handleMovePosition}
+              onDeletePosition={handleDeletePosition}
             />
           </aside>
 

@@ -1,5 +1,8 @@
 import { Move, CubeOptionRow, BestCubeAction } from "@/types/board";
-import { Position } from "@/types/board";
+import { Position, Category } from "@/types/board";
+import { useState } from "react";
+
+type EditAction = "" | "move" | "delete";
 
 type Props = {
   result: Move | undefined;
@@ -13,6 +16,10 @@ type Props = {
   handleNextPosition: () => void;
   handleSessionDone: () => void;
   isConfirmed: boolean;
+  categories: Category[];
+  currentCategoryId: string | null;
+  onMovePosition: (targetCategoryId: string) => void;
+  onDeletePosition: () => void;
 };
 
 function getMistakeColor(equityDiff: number): string {
@@ -37,12 +44,36 @@ export default function ResultsSidePanel({
   handleNextPosition,
   handleSessionDone,
   isConfirmed,
+  categories,
+  currentCategoryId,
+  onMovePosition,
+  onDeletePosition,
 }: Props) {
   const currentPosition = positionData[currentPositionIndex];
   const bestEntry = currentPosition?.cubeActions.find(
     (a): a is BestCubeAction => "bestAction" in a,
   );
   const bestActionText = bestEntry?.bestAction;
+  const [editAction, setEditAction] = useState<EditAction>("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [targetCategoryId, setTargetCategoryId] = useState<string | null>(null);
+
+  const handleEditAction = (action: EditAction) => {
+    if (action === "move") {
+      if (targetCategoryId) {
+        onMovePosition(targetCategoryId);
+      }
+    } else if (action === "delete") {
+      if (confirm("Are you sure you want to delete this position?")) {
+        onDeletePosition();
+      } else {
+        return;
+      }
+    }
+    setIsEditing(false);
+    setEditAction("");
+    setTargetCategoryId(null);
+  };
 
   return (
     <div className="w-full">
@@ -50,6 +81,74 @@ export default function ResultsSidePanel({
         <div className="text-lg font-semibold mb-2">
           Position {currentPositionIndex + 1} of {positionData.length}
         </div>
+
+        {/* Edit Position */}
+        {!isEditing ? (
+          <div className="w-full">
+            <button
+              className="px-2 py-2 bg-indigo-600 text-white rounded"
+              type="button"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Position
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 flex-col items-start">
+            <label htmlFor="edit-position">Edit Position</label>
+
+            <select
+              name="edit"
+              id="edit-position"
+              value={editAction}
+              onChange={(e) => setEditAction(e.target.value as EditAction)}
+            >
+              <option value="">Select an action</option>
+              <option value="move">move</option>
+              <option value="delete">delete</option>
+            </select>
+
+            {editAction === "move" && (
+              <select
+                name="target-category"
+                id="target-category"
+                value={targetCategoryId ?? ""}
+                onChange={(e) => setTargetCategoryId(e.target.value)}
+              >
+                <option value="">Select a category</option>
+                {categories
+                  .filter((category) => category.id !== currentCategoryId)
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+              </select>
+            )}
+
+            <button
+              className="px-2 py-2 bg-indigo-600 text-white rounded"
+              type="button"
+              disabled={
+                !editAction || (editAction === "move" && !targetCategoryId)
+              }
+              onClick={() => handleEditAction(editAction)}
+            >
+              Apply
+            </button>
+            <button
+              className="px-2 py-2 bg-indigo-600 text-white rounded"
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setEditAction("");
+                setTargetCategoryId(null);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         {isConfirmed && (
           <>

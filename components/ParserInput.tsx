@@ -86,6 +86,7 @@ export default function ParserInput() {
         setError("This is not a valid position");
         return;
       }
+      positionData.id = crypto.randomUUID();
 
       // Check if XGID is valid Move or Cube
       if (positionData.analysisType !== activeTab) {

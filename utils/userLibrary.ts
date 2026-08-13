@@ -187,7 +187,7 @@ export async function loadUserLibraryFromSupabase(
 
   const { data: positions, error: positionsError } = await supabase
     .from("positions")
-    .select("category_id, data");
+    .select("id, category_id, data");
 
   if (positionsError || !positions) {
     return { library: [] };
@@ -200,7 +200,10 @@ export async function loadUserLibraryFromSupabase(
       );
       return {
         category: category,
-        positions: categoryPositions.map((position) => position.data),
+        positions: categoryPositions.map((row) => ({
+          ...row.data,
+          id: row.id,
+        })),
       };
     }),
   };
@@ -321,6 +324,7 @@ export async function importLocalStorageToSupabase(
       if (lib.positions.length === 0) continue;
 
       const positionRows = lib.positions.map((position) => ({
+        id: position.id,
         category_id: categoryId,
         user_id: userId,
         data: position,
@@ -404,6 +408,7 @@ export async function insertPositionToSupabase(
   position: Position,
 ): Promise<void> {
   const { error } = await supabase.from("positions").insert({
+    id: position.id,
     category_id: categoryId,
     user_id: userId,
     data: position,
@@ -412,6 +417,72 @@ export async function insertPositionToSupabase(
   if (error) {
     console.error("Insert position failed:", error);
   }
+}
+
+export async function movePositionToSupabase(
+  supabase: SupabaseClient,
+  positionId: string,
+  targetCategoryId: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("positions")
+    .update({ category_id: targetCategoryId })
+    .eq("id", positionId);
+  if (error) {
+    console.error("Move position failed:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function deletePositionFromSupabase(
+  supabase: SupabaseClient,
+  positionId: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("positions")
+    .delete()
+    .eq("id", positionId);
+
+  if (error) {
+    console.error("Delete position failed:", error);
+    return false;
+  }
+  return true;
+}
+
+export function movePositionInLocalLibrary(
+  userLibrary: UserLibrary,
+  sourceCategoryId: string,
+  targetCategoryId: string,
+  positionId: string,
+): void {
+  const source = userLibrary.library.find(
+    (entry) => entry.category.id === sourceCategoryId,
+  );
+  const target = userLibrary.library.find(
+    (entry) => entry.category.id === targetCategoryId,
+  );
+  if (!source || !target) return;
+
+  const index = source.positions.findIndex((p) => p.id === positionId);
+  if (index === -1) return;
+
+  const [position] = source.positions.splice(index, 1);
+  target.positions.push(position);
+}
+
+export function deletePositionFromLocalLibrary(
+  userLibrary: UserLibrary,
+  categoryId: string,
+  positionId: string,
+): void {
+  const category = userLibrary.library.find(
+    (entry) => entry.category.id === categoryId,
+  );
+  if (!category) return;
+
+  category.positions = category.positions.filter((p) => p.id !== positionId);
 }
 
 export async function saveCategorySessionToSupabase(

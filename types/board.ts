@@ -77,6 +77,7 @@ export type CubeOptionRow = {
 export interface Position {
   analysisType: string;
   analysisEngine?: string;
+  id?: string;
   barWhite: number;
   barBlack: number;
   bestMoves: Move[];

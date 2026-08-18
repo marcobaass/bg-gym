@@ -1,10 +1,10 @@
 import { Position } from "@/types/board";
 
-export const BAR_POINT_WHITE = -1
-export const BAR_POINT_BLACK = -2
+export const BAR_POINT_WHITE = -1;
+export const BAR_POINT_BLACK = -2;
 
-export function getBarPointForPlayer(playerColor: 'White' | 'Black'): number {
-  return playerColor === 'White' ? BAR_POINT_WHITE : BAR_POINT_BLACK
+export function getBarPointForPlayer(playerColor: "White" | "Black"): number {
+  return playerColor === "White" ? BAR_POINT_WHITE : BAR_POINT_BLACK;
 }
 
 /**
@@ -13,23 +13,25 @@ export function getBarPointForPlayer(playerColor: 'White' | 'Black'): number {
 export function isValidPoint(
   position: Position | null,
   pointIndex: number,
-  remainingDice: number[]
+  remainingDice: number[],
 ): boolean {
   if (!position) return false;
 
-  const playerColor = position.playerToPlay as 'White' | 'Black';
+  const playerColor = position.playerToPlay as "White" | "Black";
 
   // Handle bar clicks
   if (pointIndex === BAR_POINT_WHITE || pointIndex === BAR_POINT_BLACK) {
     // Check if it's the correct player's turn
-    const isCorrectPlayer = (pointIndex === BAR_POINT_WHITE && playerColor === 'White') ||
-                            (pointIndex === BAR_POINT_BLACK && playerColor === 'Black');
+    const isCorrectPlayer =
+      (pointIndex === BAR_POINT_WHITE && playerColor === "White") ||
+      (pointIndex === BAR_POINT_BLACK && playerColor === "Black");
 
     if (!isCorrectPlayer) return false;
 
     // Check if this player has checkers on bar
-    const hasCheckersOnBar = (pointIndex === BAR_POINT_WHITE && position.barWhite > 0) ||
-                             (pointIndex === BAR_POINT_BLACK && position.barBlack > 0);
+    const hasCheckersOnBar =
+      (pointIndex === BAR_POINT_WHITE && position.barWhite > 0) ||
+      (pointIndex === BAR_POINT_BLACK && position.barBlack > 0);
 
     if (!hasCheckersOnBar) return false;
 
@@ -45,13 +47,13 @@ export function isValidPoint(
   if (point.owner !== playerColor) return false;
 
   // Must have checkers
-  if (point.count === 0) return false
+  if (point.count === 0) return false;
 
   // If player has checkers on Bar, can only play from bar
   if (mustPlayFromBar(position, playerColor)) return false;
 
   // Check if at least one die can make a legal move
-  const availableMoves = getAvailableMoves(pointIndex, remainingDice, position)
+  const availableMoves = getAvailableMoves(pointIndex, remainingDice, position);
   return availableMoves.length > 0;
 }
 
@@ -61,9 +63,9 @@ export function isValidPoint(
 export function getAvailableMoves(
   fromPoint: number, //selected Checker
   diceValues: number[],
-  position: Position
+  position: Position,
 ): number[] {
-  const playerColor = position.playerToPlay
+  const playerColor = position.playerToPlay;
 
   // 1. Handle Bar Entry separately
   if (fromPoint === BAR_POINT_WHITE || fromPoint === BAR_POINT_BLACK) {
@@ -71,28 +73,29 @@ export function getAvailableMoves(
   }
 
   // 2. Regular movement logic
-  const destinations: number[] = []
-  const direction = playerColor === "White" ? -1 : 1
+  const destinations: number[] = [];
+  const direction = playerColor === "White" ? -1 : 1;
 
-  for(const die of diceValues) {
-    const destination = fromPoint + (die * direction)
+  for (const die of diceValues) {
+    const destination = fromPoint + die * direction;
 
     // Check bearing off
     if (destination < 0 || destination >= 24) {
-
       if (isValidBearingMove(fromPoint, die, position, playerColor)) {
         // -1 for White off-board, 24 for Black off-board
-        destinations.push(playerColor === 'White' ? -1 : 24);
+        destinations.push(playerColor === "White" ? -1 : 24);
       }
     } else {
       // Check if destination is valid
-      if (isValidDestination(fromPoint, destination, die, position, playerColor)) {
-        destinations.push(destination)
+      if (
+        isValidDestination(fromPoint, destination, die, position, playerColor)
+      ) {
+        destinations.push(destination);
       }
     }
   }
 
-  return [...new Set(destinations)]
+  return [...new Set(destinations)];
 }
 
 /**
@@ -101,7 +104,7 @@ export function getAvailableMoves(
 export function getBarEntryMoves(
   diceValues: number[],
   position: Position,
-  playerColor: 'White' | 'Black'
+  playerColor: "White" | "Black",
 ): number[] {
   const entryPoints: number[] = [];
 
@@ -111,7 +114,7 @@ export function getBarEntryMoves(
   for (const die of diceValues) {
     let entryPoint: number;
 
-    if (playerColor === 'Black') {
+    if (playerColor === "Black") {
       entryPoint = die - 1;
     } else {
       entryPoint = 24 - die;
@@ -123,9 +126,11 @@ export function getBarEntryMoves(
     const destPoint = position.points[entryPoint];
 
     // Can enter on empty, own checkers, or single opponent checker
-    if (destPoint.count === 0 ||
-        destPoint.owner === playerColor ||
-        (destPoint.owner !== playerColor && destPoint.count === 1)) {
+    if (
+      destPoint.count === 0 ||
+      destPoint.owner === playerColor ||
+      (destPoint.owner !== playerColor && destPoint.count === 1)
+    ) {
       entryPoints.push(entryPoint);
     }
   }
@@ -140,28 +145,28 @@ export function isValidDestination(
   to: number,
   diceValue: number,
   position: Position,
-  playerColor: 'White' | 'Black'
+  playerColor: "White" | "Black",
 ): boolean {
-  const destPoint = position.points[to]
+  const destPoint = position.points[to];
 
   // Bearing off case
   if (to < 0 || to >= 24) {
-    return canBearOff(position, playerColor)
+    return canBearOff(position, playerColor);
   }
 
   //Empty point always valid
-  if (destPoint.count === 0) return true
+  if (destPoint.count === 0) return true;
 
   // Own checkers always valid
-  if (destPoint.owner === playerColor) return true
+  if (destPoint.owner === playerColor) return true;
 
   // Single opponent checker - can hit (valid)
-  if (destPoint.count < 2) return true
+  if (destPoint.count < 2) return true;
 
   // Multiple opponent checkers - blocked (invalid)
-  if (destPoint.count > 1 && destPoint.owner !== playerColor) return false
+  if (destPoint.count > 1 && destPoint.owner !== playerColor) return false;
 
-  return false
+  return false;
 }
 
 /**
@@ -169,12 +174,12 @@ export function isValidDestination(
  */
 export function mustPlayFromBar(
   position: Position,
-  playerColor: 'White' | 'Black'
+  playerColor: "White" | "Black",
 ): boolean {
-  if (playerColor === 'White') {
-    return position.barWhite > 0
+  if (playerColor === "White") {
+    return position.barWhite > 0;
   } else {
-    return position.barBlack > 0
+    return position.barBlack > 0;
   }
 }
 
@@ -183,23 +188,23 @@ export function mustPlayFromBar(
  */
 export function canBearOff(
   position: Position,
-  playerColor: 'White' | 'Black'
+  playerColor: "White" | "Black",
 ): boolean {
-  const points = position.points
+  const points = position.points;
 
   // Checks first all points outside Home and than checkers on bar
-  if (playerColor === 'White') {
-    for(let i = 6; i < 24; i++) {
-      if (points[i].count > 0 && points[i].owner === 'White') return false
+  if (playerColor === "White") {
+    for (let i = 6; i < 24; i++) {
+      if (points[i].count > 0 && points[i].owner === "White") return false;
     }
-    return position.barWhite === 0
+    return position.barWhite === 0;
   } else {
-    if (playerColor === 'Black') {
-      for(let i = 0; i < 18; i++) {
-        if (points[i].count > 0 && points[i].owner === 'Black') return false
+    if (playerColor === "Black") {
+      for (let i = 0; i < 18; i++) {
+        if (points[i].count > 0 && points[i].owner === "Black") return false;
       }
     }
-    return position.barBlack === 0
+    return position.barBlack === 0;
   }
 }
 
@@ -207,14 +212,15 @@ export function isValidBearingMove(
   fromPoint: number,
   dieValue: number,
   position: Position,
-  playerColor: 'White' | 'Black'
+  playerColor: "White" | "Black",
 ): boolean {
-  if (!canBearOff(position, playerColor)) return false
+  if (!canBearOff(position, playerColor)) return false;
 
   // Converting 0-23 index to a 1-6 "distance from home"
   // White: point 0 is 1, point 5 is 6.
   // Black: point 23 is 1, point 18 is 6.
-  const distanceFromHome = playerColor === 'White' ? fromPoint +1 : 24 - fromPoint;
+  const distanceFromHome =
+    playerColor === "White" ? fromPoint + 1 : 24 - fromPoint;
 
   // Check if exact bearing off possible
   if (dieValue === distanceFromHome) return true;
@@ -229,15 +235,49 @@ export function isValidBearingMove(
   return false;
 }
 
-function getFurthestPoint(position: Position, playerColor: 'White' | 'Black'): number {
-  if (playerColor === 'White') {
+function getFurthestPoint(
+  position: Position,
+  playerColor: "White" | "Black",
+): number {
+  if (playerColor === "White") {
     for (let i = 5; i >= 0; i--) {
-      if (position.points[i].owner === 'White' && position.points[i].count > 0) return i + 1;
+      if (position.points[i].owner === "White" && position.points[i].count > 0)
+        return i + 1;
     }
   } else {
     for (let i = 18; i <= 23; i++) {
-      if (position.points[i].owner === 'Black' && position.points[i].count > 0) return 24 - i;
+      if (position.points[i].owner === "Black" && position.points[i].count > 0)
+        return 24 - i;
     }
   }
   return 0;
+}
+
+export function getDieUsedForBearOff(
+  fromPoint: number,
+  remainingDice: number[],
+  position: Position,
+): number | null {
+  const playerColor = position.playerToPlay;
+  const distanceFromHome =
+    playerColor === "White" ? fromPoint + 1 : 24 - fromPoint;
+
+  const validDies: number[] = [];
+  for (const die of remainingDice) {
+    if (
+      die === distanceFromHome &&
+      isValidBearingMove(fromPoint, die, position, playerColor)
+    )
+      return die;
+
+    if (
+      die > distanceFromHome &&
+      isValidBearingMove(fromPoint, die, position, playerColor)
+    ) {
+      validDies.push(die);
+    }
+  }
+  validDies.sort((a, b) => a - b);
+  if (validDies.length > 0) return validDies[0];
+  return null;
 }

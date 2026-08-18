@@ -194,7 +194,10 @@ export default function ResultsSidePanel({
                         {bestMove.move
                           .map((move) => {
                             const from = move[0] < 0 ? "Bar" : move[0];
-                            const to = move[1];
+                            const to =
+                              move[1] === 25 || move[1] === -1
+                                ? "Off"
+                                : move[1];
                             return `${from}/${to}`;
                           })
                           .join(", ")}

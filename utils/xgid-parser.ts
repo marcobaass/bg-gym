@@ -182,7 +182,7 @@ function getAnalysisType(xgid: string): AnalysisType {
 
 function moveAnalysis(xgid: string, player: string): Move[] {
   const regex =
-    /^\s*(\d+)\.\s+(.+?)\s+((?:Bar|\d+)\/[\d\/\s\*\(\)Bar]+)\s+eq:([+\-]?\d+,\d+)/gm;
+    /^\s*(\d+)\.\s+(.+?)\s+((?:Bar|\d+)\/(?:Bar|Off|\d+)(?:\(\d+\))?(?:\s+(?:Bar|\d+)\/(?:Bar|Off|\d+)(?:\(\d+\))?)*)\s+eq:([+\-]?\d+,\d+)/gm;
 
   const bestMoves: Move[] = [];
   let match;
@@ -216,7 +216,7 @@ function stringToNums(str: string, player: string) {
     const fromNum =
       from === "Bar" ? (player === "White" ? -1 : -2) : Number(from);
 
-    const toNum = parseInt(to);
+    const toNum = to === "Off" ? (player === "White" ? -1 : 25) : parseInt(to);
 
     // Push the move 'count' times
     for (let i = 0; i < count; i++) {

@@ -18,6 +18,7 @@ import {
   deleteCategory,
   getUserLibrary,
   getSessionHistory,
+  canUserEditCategory,
 } from "@/utils/repository";
 
 function lastFinishedAtMs(
@@ -181,6 +182,19 @@ export default function Home() {
                   <LastPlayed lastPlayed={sessions[0]?.finishedAt ?? null} />
                 </div>
               </Link>
+              {canUserEditCategory(
+                user,
+                categories.category.visibility || "system",
+              ) && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteCategory(categoryId)}
+                  className="absolute top-3 right-3 inline-flex items-center justify-center text-white hover:bg-red-700 w-5 h-5 text-xs cursor-pointer bg-red-500 rounded-sm"
+                  aria-label={`Delete category ${categories.category.name}`}
+                >
+                  X
+                </button>
+              )}
             </div>
           );
         })}
@@ -242,6 +256,7 @@ export default function Home() {
                   <LastPlayed lastPlayed={sessions[0]?.finishedAt ?? null} />
                 </div>
               </Link>
+
               <button
                 type="button"
                 onClick={() => handleDeleteCategory(categoryId)}

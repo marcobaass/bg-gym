@@ -69,38 +69,43 @@
 [x] Change ResultModal from Popup to sidebar
 [x] parser adjust to 2-ply, 3-ply and 1ply
 [x] delete single positions or move in diffrent category
-[ ] guarding default categories / no move or delete here
+[x] guarding default categories / no move or delete here
 [ ] cube descicions buttons on board
 [ ] adjustments for mobile
+----------------------------------------------------------------------------------
 [ ] Results hovering and showing on Board.
-[ ] 
-[ ] default categories (Opening rolls, second roll, etc.)
-    A. Datenmodell (Sharing-ready)
-    [ ] Spalte visibility an categories: private | system | (später: public)
+[ ] loading animation instead of Loading... text when clicking on category
+[~] default categories (Opening rolls, second roll, etc.)
+    A. Datenmodell / Sichtbarkeit
+    [x] Spalte visibility an categories: private | system | (später: public)
     [ ] owner_user_id klar benennen / user_id als Owner behandeln
-    [ ] RLS: SELECT = eigene OR visibility = system (später: OR public OR category_shares)
-    [ ] RLS: INSERT/UPDATE/DELETE nur Owner; system-Kategorien nur Curator/System-User
+    [~] RLS: SELECT = eigene OR visibility = system (im App-Code vorbereitet, DB-Policy prüfen)
+    [~] RLS: INSERT/UPDATE/DELETE nur Owner; system-Kategorien nur Curator/System-User (im Flow vorbereitet, DB-Policy prüfen)
     B. Curator-Workflow (Parser)
-    [ ] Supabase Auth-User „Curator/Defaults“ anlegen, UUID in Env (z.B. SYSTEM_USER_ID)
-    [ ] Als Curator einloggen → Parser wie heute → Kategorien + XG-Positionen in DB
-    [ ] Neue Kategorien beim Curator mit visibility = system speichern (Parser oder DB-Default)
+    [x] Supabase Auth-User „Curator/Defaults“ anlegen, UUID in Env (NEXT_PUBLIC_CURATOR_USER_ID)
+    [x] Als Curator einloggen -> Parser wie heute -> Kategorien + XG-Positionen in DB
+    [x] Neue Kategorien beim Curator mit visibility = system speichern
     C. App laden & anzeigen
-    [ ] loadUserLibraryFromSupabase: eigene + system-Kategorien mergen (ein Loader-Pfad)
-    [ ] Homepage: Block „Default Categories“ aus system-Kategorien (Hardcode entfernen)
-    [ ] Board/Training: categoryId von System-Kategorien erlauben
-    [ ] Sessions bleiben pro User (category_sessions.user_id) — auch bei Defaults
+    [x] loadUserLibraryFromSupabase: eigene + system-Kategorien mergen (ein Loader-Pfad)
+    [x] Homepage: Block „Default Categories“ aus system-Kategorien
+    [x] Board/Training: categoryId von System-Kategorien erlauben
+    [x] Sessions bleiben pro User (category_sessions.user_id) - auch bei Defaults
+    [ ] System-Kategorien/Positionen nur fuer Curator/Admin editierbar machen
     D. Gäste (optional, später entscheiden)
     [ ] Variante 1: anon SELECT nur auf visibility = system
     [ ] Variante 2: exportiertes JSON im Repo für Gäste
-    E. Später: User-Kategorien teilen (gleiches Modell, kein zweiter Sonderweg)
+    E. Später: User-Kategorien teilen
     [ ] visibility = public ODER Tabelle category_shares
-    [ ] UI: „Kategorie teilen“ / öffentlich schalten (kein Parser-Umbau nötig)
+    [ ] UI: „Kategorie teilen“ / öffentlich schalten
     [ ] UI trennen: Offizielle Defaults (system) vs. Community (public) vs. Meine (private)
-    [ ] Kein Verschieben von user_id nötig — nur visibility ändern
-[ ] delete button on cards -> edit button
-    [ ] rename categorys - use same helper in userLibrary.ts for check if taken
-    [~] modal or dialog for ask if really delete category   
+    [ ] Kein Verschieben von user_id nötig - nur visibility ändern
+[ ] category cards polish
+    [ ] delete button on cards -> edit button
+    [ ] rename categories - use same helper in userLibrary.ts for check if taken
+    [~] modal or dialog for ask if really delete category
     [x] delete category
-    [ ] delete positions?
-[ ] option for setting how much positions to train / option on next modal to quitt session?
+    [x] delete positions
+[ ] training flow options
+    [ ] option for setting how many positions to train
+    [ ] option in next/done modal to quit session
 

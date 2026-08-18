@@ -29,6 +29,7 @@ import {
   movePosition,
   deletePosition,
   deleteCategory,
+  canUserEditCategory,
 } from "@/utils/repository";
 
 import { createClient } from "@/utils/supabase/client";
@@ -63,9 +64,11 @@ export default function BoardPageClient() {
   const [cubeOptions, setCubeOptions] = useState<CubeOptionRow[]>([]);
   const [cubePoints, setCubePoints] = useState<number>(0);
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null | undefined>(undefined);
 
   const [categories, setCategories] = useState<Category[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
 
   //User data from Supabase
   useEffect(() => {
@@ -90,6 +93,8 @@ export default function BoardPageClient() {
 
   //Position data
   useEffect(() => {
+    if (user === undefined) return;
+
     const fetchPositionData = async () => {
       const userLibrary = await getUserLibrary(supabase, user);
       const categoryPositions =
@@ -103,6 +108,7 @@ export default function BoardPageClient() {
       const shuffled = [...categoryPositions];
       const shuffledPositions = shufflePositions(shuffled);
       setPositionData(shuffledPositions);
+      setIsLoading(false);
     };
 
     fetchPositionData();
@@ -140,7 +146,7 @@ export default function BoardPageClient() {
         positionsPlayed > 0 ? ui.totalScore / positionData.length : 0,
     };
     if (searchParamsCategoryId) {
-      await saveCategorySession(supabase, user, categorySession);
+      await saveCategorySession(supabase, user ?? null, categorySession);
     }
     router.push("/");
   };
@@ -210,7 +216,7 @@ export default function BoardPageClient() {
   // ------------------------------------ Handler for position actions ------------------------------------
 
   const getRemainingPositionCount = async (categoryId: string) => {
-    const userLibrary = await getUserLibrary(supabase, user);
+    const userLibrary = await getUserLibrary(supabase, user ?? null);
     const categoryPositions =
       userLibrary.library.find(
         (category) => category.category.id === categoryId,
@@ -232,7 +238,7 @@ export default function BoardPageClient() {
 
     const success = await movePosition(
       supabase,
-      user,
+      user ?? null,
       searchParamsCategoryId,
       targetCategoryId,
       currentId,
@@ -250,7 +256,7 @@ export default function BoardPageClient() {
       (position) => position.id !== currentId,
     );
     if (remainingPositionCount === 0) {
-      await deleteCategory(supabase, user, searchParamsCategoryId);
+      await deleteCategory(supabase, user ?? null, searchParamsCategoryId);
       router.push("/");
       return;
     } else if (currentPositionIndex >= newPositionData.length) {
@@ -275,7 +281,7 @@ export default function BoardPageClient() {
 
     const success = await deletePosition(
       supabase,
-      user,
+      user ?? null,
       searchParamsCategoryId,
       currentId,
     );
@@ -291,7 +297,7 @@ export default function BoardPageClient() {
       (position) => position.id !== currentId,
     );
     if (remainingPositionCount === 0) {
-      await deleteCategory(supabase, user, searchParamsCategoryId);
+      await deleteCategory(supabase, user ?? null, searchParamsCategoryId);
       router.push("/");
       return;
     } else if (currentPositionIndex >= newPositionData.length) {
@@ -309,90 +315,94 @@ export default function BoardPageClient() {
 
   const isCubePosition = current?.analysisType === "Cube";
 
-  return (
-    <>
-      {positionData.length > 0 ? (
-        <div className="flex h-dvh w-full flex-row">
-          {/* Results Side Panel */}
-          <aside className="min-w-[280px] flex-1">
-            <ResultsSidePanel
-              result={result}
-              bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
-              currentPositionIndex={currentPositionIndex}
-              positionData={positionData}
-              score={ui.score}
-              totalScore={ui.totalScore}
-              cubeOptions={cubeOptions}
-              cubePoints={cubePoints}
-              handleNextPosition={handleNextPosition}
-              handleSessionDone={handleSessionDone}
-              isConfirmed={isConfirmed}
-              categories={categories}
-              currentCategoryId={searchParamsCategoryId}
-              onMovePosition={handleMovePosition}
-              onDeletePosition={handleDeletePosition}
-            />
-          </aside>
+  return isLoading ? (
+    <div>Loading...</div>
+  ) : positionData.length > 0 ? (
+    <div className="flex h-dvh w-full flex-row">
+      {/* Results Side Panel */}
+      <aside className="min-w-[280px] flex-1">
+        <ResultsSidePanel
+          result={result}
+          bestMoves={positionData[currentPositionIndex]?.bestMoves ?? []}
+          currentPositionIndex={currentPositionIndex}
+          positionData={positionData}
+          score={ui.score}
+          totalScore={ui.totalScore}
+          cubeOptions={cubeOptions}
+          cubePoints={cubePoints}
+          handleNextPosition={handleNextPosition}
+          handleSessionDone={handleSessionDone}
+          isConfirmed={isConfirmed}
+          categories={categories}
+          currentCategoryId={searchParamsCategoryId}
+          onMovePosition={handleMovePosition}
+          onDeletePosition={handleDeletePosition}
+          canEditPosition={canUserEditCategory(
+            user ?? null,
+            categories.find(
+              (category) => category.id === searchParamsCategoryId,
+            )?.visibility,
+          )}
+        />
+      </aside>
 
-          {/* Board */}
-          <div
-            className="flex h-dvh shrink-0 flex-col"
-            style={{
-              width: "min(80vw, calc(100svh * 5 / 4), calc(100vw - 380px))",
-            }}
-          >
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2">
-                <CubeDecisionButtons
-                  isCubePosition={isCubePosition}
-                  cubeDecisions={cubeDecisions}
-                  setCubeDecision={setCubeDecision}
-                  cubeDecision={cubeDecision}
-                  userColor={userColor}
-                  isRedouble={isRedouble}
-                />
-              </div>
-            </div>
-            <div className="relative w-full max-h-full aspect-[5/4] @container">
-              <BoardRenderer
-                positionData={ui.currentPosition}
-                selectedPoint={ui.selectedPoint}
-                availableMoves={ui.availableMoves}
-                remainingDice={ui.remainingDice}
-                onCheckerClick={handleCheckerClick}
-                onDestinationClick={handleDestinationClick}
-              />
-              {(current?.analysisType === "Cube" ||
-                current?.analysisType === "Move") && (
-                <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
-                  {current?.analysisType === "Move" && (
-                    <button
-                      className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"
-                      onClick={() => dispatch({ type: "UNDO_MOVE" })}
-                      disabled={ui.moveHistory.length === 0 || isConfirmed}
-                    >
-                      ↩
-                    </button>
-                  )}
-                  <SubmitButton
-                    current={current}
-                    handleSubmitMove={handleSubmitMove}
-                    handleSubmitCubeDecision={handleSubmitCubeDecision}
-                    disabled={
-                      isConfirmed ||
-                      (current?.analysisType === "Move"
-                        ? ui.remainingDice.length > 0
-                        : cubeDecision === null)
-                    }
-                  />
-                </div>
-              )}
-            </div>
+      {/* Board */}
+      <div
+        className="flex h-dvh shrink-0 flex-col"
+        style={{
+          width: "min(80vw, calc(100svh * 5 / 4), calc(100vw - 380px))",
+        }}
+      >
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2">
+            <CubeDecisionButtons
+              isCubePosition={isCubePosition}
+              cubeDecisions={cubeDecisions}
+              setCubeDecision={setCubeDecision}
+              cubeDecision={cubeDecision}
+              userColor={userColor}
+              isRedouble={isRedouble}
+            />
           </div>
         </div>
-      ) : (
-        <div>No positions available</div>
-      )}
-    </>
+        <div className="relative w-full max-h-full aspect-[5/4] @container">
+          <BoardRenderer
+            positionData={ui.currentPosition}
+            selectedPoint={ui.selectedPoint}
+            availableMoves={ui.availableMoves}
+            remainingDice={ui.remainingDice}
+            onCheckerClick={handleCheckerClick}
+            onDestinationClick={handleDestinationClick}
+          />
+          {(current?.analysisType === "Cube" ||
+            current?.analysisType === "Move") && (
+            <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
+              {current?.analysisType === "Move" && (
+                <button
+                  className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"
+                  onClick={() => dispatch({ type: "UNDO_MOVE" })}
+                  disabled={ui.moveHistory.length === 0 || isConfirmed}
+                >
+                  ↩
+                </button>
+              )}
+              <SubmitButton
+                current={current}
+                handleSubmitMove={handleSubmitMove}
+                handleSubmitCubeDecision={handleSubmitCubeDecision}
+                disabled={
+                  isConfirmed ||
+                  (current?.analysisType === "Move"
+                    ? ui.remainingDice.length > 0
+                    : cubeDecision === null)
+                }
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div>No positions available</div>
   );
 }

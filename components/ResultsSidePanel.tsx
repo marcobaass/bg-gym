@@ -20,6 +20,7 @@ type Props = {
   currentCategoryId: string | null;
   onMovePosition: (targetCategoryId: string) => void;
   onDeletePosition: () => void;
+  canEditPosition: boolean;
 };
 
 function getMistakeColor(equityDiff: number): string {
@@ -48,6 +49,7 @@ export default function ResultsSidePanel({
   currentCategoryId,
   onMovePosition,
   onDeletePosition,
+  canEditPosition,
 }: Props) {
   const currentPosition = positionData[currentPositionIndex];
   const bestEntry = currentPosition?.cubeActions.find(
@@ -83,72 +85,74 @@ export default function ResultsSidePanel({
         </div>
 
         {/* Edit Position */}
-        {!isEditing ? (
-          <div className="w-full">
-            <button
-              className="px-2 py-2 bg-indigo-600 text-white rounded"
-              type="button"
-              onClick={() => setIsEditing(true)}
-            >
-              Edit Position
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2 flex-col items-start">
-            <label htmlFor="edit-position">Edit Position</label>
-
-            <select
-              name="edit"
-              id="edit-position"
-              value={editAction}
-              onChange={(e) => setEditAction(e.target.value as EditAction)}
-            >
-              <option value="">Select an action</option>
-              <option value="move">move</option>
-              <option value="delete">delete</option>
-            </select>
-
-            {editAction === "move" && (
-              <select
-                name="target-category"
-                id="target-category"
-                value={targetCategoryId ?? ""}
-                onChange={(e) => setTargetCategoryId(e.target.value)}
+        {canEditPosition ? (
+          !isEditing ? (
+            <div className="w-full">
+              <button
+                className="px-2 py-2 bg-indigo-600 text-white rounded"
+                type="button"
+                onClick={() => setIsEditing(true)}
               >
-                <option value="">Select a category</option>
-                {categories
-                  .filter((category) => category.id !== currentCategoryId)
-                  .map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-              </select>
-            )}
+                Edit Position
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2 flex-col items-start">
+              <label htmlFor="edit-position">Edit Position</label>
 
-            <button
-              className="px-2 py-2 bg-indigo-600 text-white rounded"
-              type="button"
-              disabled={
-                !editAction || (editAction === "move" && !targetCategoryId)
-              }
-              onClick={() => handleEditAction(editAction)}
-            >
-              Apply
-            </button>
-            <button
-              className="px-2 py-2 bg-indigo-600 text-white rounded"
-              type="button"
-              onClick={() => {
-                setIsEditing(false);
-                setEditAction("");
-                setTargetCategoryId(null);
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+              <select
+                name="edit"
+                id="edit-position"
+                value={editAction}
+                onChange={(e) => setEditAction(e.target.value as EditAction)}
+              >
+                <option value="">Select an action</option>
+                <option value="move">move</option>
+                <option value="delete">delete</option>
+              </select>
+
+              {editAction === "move" && (
+                <select
+                  name="target-category"
+                  id="target-category"
+                  value={targetCategoryId ?? ""}
+                  onChange={(e) => setTargetCategoryId(e.target.value)}
+                >
+                  <option value="">Select a category</option>
+                  {categories
+                    .filter((category) => category.id !== currentCategoryId)
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              )}
+
+              <button
+                className="px-2 py-2 bg-indigo-600 text-white rounded"
+                type="button"
+                disabled={
+                  !editAction || (editAction === "move" && !targetCategoryId)
+                }
+                onClick={() => handleEditAction(editAction)}
+              >
+                Apply
+              </button>
+              <button
+                className="px-2 py-2 bg-indigo-600 text-white rounded"
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditAction("");
+                  setTargetCategoryId(null);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          )
+        ) : null}
 
         {isConfirmed && (
           <>

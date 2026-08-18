@@ -67,10 +67,39 @@ export async function movePosition(
 ): Promise<boolean> {
   if (!positionId) return false;
 
+  let userLibrary;
+  if (!user) {
+    userLibrary = loadUserLibrary();
+  } else {
+    userLibrary = await getUserLibrary(supabase, user);
+  }
+
+  const categoryEntry = userLibrary.library.find(
+    (category) => category.category.id === sourceCategoryId,
+  );
+  if (!categoryEntry) {
+    return false;
+  }
+
+  const targetCategoryEntry = userLibrary.library.find(
+    (category) => category.category.id === targetCategoryId,
+  );
+  if (!targetCategoryEntry) {
+    return false;
+  }
+
+  const visibilitySource = categoryEntry.category.visibility;
+  const visibilityTarget = targetCategoryEntry.category.visibility;
+  if (
+    !canUserEditCategory(user, visibilitySource) ||
+    !canUserEditCategory(user, visibilityTarget)
+  ) {
+    return false;
+  }
+
   if (user) {
     return await movePositionToSupabase(supabase, positionId, targetCategoryId);
   } else {
-    const userLibrary = loadUserLibrary();
     movePositionInLocalLibrary(
       userLibrary,
       sourceCategoryId,
@@ -89,6 +118,25 @@ export async function deletePosition(
   positionId: string,
 ): Promise<boolean> {
   if (!positionId) return false;
+
+  let userLibrary;
+  if (!user) {
+    userLibrary = loadUserLibrary();
+  } else {
+    userLibrary = await getUserLibrary(supabase, user);
+  }
+
+  const categoryEntry = userLibrary.library.find(
+    (category) => category.category.id === categoryId,
+  );
+  if (!categoryEntry) {
+    return false;
+  }
+
+  const visibility = categoryEntry.category.visibility;
+  if (!canUserEditCategory(user, visibility)) {
+    return false;
+  }
 
   if (user) {
     return await deletePositionFromSupabase(supabase, positionId);
@@ -140,10 +188,27 @@ export async function deleteCategory(
   user: User | null,
   categoryId: string,
 ): Promise<void> {
+  let userLibrary;
+  if (!user) {
+    userLibrary = loadUserLibrary();
+  } else {
+    userLibrary = await getUserLibrary(supabase, user);
+  }
+
+  const category = userLibrary.library.find(
+    (category) => category.category.id === categoryId,
+  );
+  if (!category) {
+    return;
+  }
+  const visibility = category.category.visibility;
+
+  if (!canUserEditCategory(user, visibility)) {
+    return;
+  }
   if (user) {
     return await deleteCategoryFromSupabase(supabase, user.id, categoryId);
   } else {
-    const userLibrary = loadUserLibrary();
     const newUserLibrary = userLibrary.library.filter(
       (category) => category.category.id !== categoryId,
     );
@@ -155,4 +220,18 @@ export async function deleteCategory(
 
     localStorage.setItem("SessionHistory", JSON.stringify(sessionHistory));
   }
+}
+
+//--------------------Helpers--------------------
+export function canUserEditCategory(
+  user: User | null,
+  visibility: string | undefined,
+): boolean {
+  const curator = user?.id === process.env.NEXT_PUBLIC_CURATOR_USER_ID;
+
+  if ((visibility === "system" && curator) || visibility !== "system") {
+    return true;
+  }
+
+  return false;
 }

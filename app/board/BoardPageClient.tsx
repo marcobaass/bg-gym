@@ -364,18 +364,6 @@ export default function BoardPageClient() {
           width: "min(80vw, calc(100svh * 5 / 4), calc(100vw - 380px))",
         }}
       >
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2">
-            <CubeDecisionButtons
-              isCubePosition={isCubePosition}
-              cubeDecisions={cubeDecisions}
-              setCubeDecision={setCubeDecision}
-              cubeDecision={cubeDecision}
-              userColor={userColor}
-              isRedouble={isRedouble}
-            />
-          </div>
-        </div>
         <div className="relative w-full max-h-full aspect-[5/4] @container">
           <BoardRenderer
             positionData={ui.currentPosition}
@@ -388,6 +376,16 @@ export default function BoardPageClient() {
           {(current?.analysisType === "Cube" ||
             current?.analysisType === "Move") && (
             <div className="absolute inset-0 flex flex-col gap-[1.5cqw] items-center justify-center pointer-events-none">
+              <div className="absolute text-[2cqw] left-[27.4%] top-[50%] -translate-x-1/2 -translate-y-1/2 text-center pointer-events-auto">
+                <CubeDecisionButtons
+                  isCubePosition={isCubePosition}
+                  cubeDecisions={cubeDecisions}
+                  setCubeDecision={setCubeDecision}
+                  cubeDecision={cubeDecision}
+                  userColor={userColor}
+                  isRedouble={isRedouble}
+                />
+              </div>
               {current?.analysisType === "Move" && (
                 <button
                   className="text-[1.5cqw] px-[1cqw] py-[0.25cqw] rounded-[0.5cqw] border-[0.15cqw] border-black enabled:bg-gray-100 disabled:bg-gray-300 text-black enabled:hover:bg-white pointer-events-auto enabled:cursor-pointer"

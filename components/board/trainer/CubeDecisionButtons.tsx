@@ -34,7 +34,7 @@ export default function CubeDecisionButtons({
   }
 
   return (
-    <div className="space-x-2">
+    <div className="flex items-center justify-center flex-col gap-3 items-stretch">
       {isCubePosition && (
         <>
           {cubeDecisions.map((decision) => (
@@ -43,7 +43,7 @@ export default function CubeDecisionButtons({
               type="button"
               onClick={() => setCubeDecision(decision)}
               className={clsx(
-                "mt-4 px-6 py-2 rounded disabled:bg-gray-400",
+                "px-3 py-1 rounded disabled:bg-gray-400 shadow-lg  cursor-pointer",
                 cubeDecision === decision
                   ? "bg-blue-600 text-white"
                   : userColor === "White"

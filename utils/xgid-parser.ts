@@ -182,7 +182,7 @@ function getAnalysisType(xgid: string): AnalysisType {
 
 function moveAnalysis(xgid: string, player: string): Move[] {
   const regex =
-    /^\s*(\d+)\.\s+(.+?)\s+((?:Bar|\d+)\/(?:Bar|Off|\d+)(?:\(\d+\))?(?:\s+(?:Bar|\d+)\/(?:Bar|Off|\d+)(?:\(\d+\))?)*)\s+eq:([+\-]?\d+,\d+)/gm;
+    /^\s*(\d+)\.\s+(.+?)\s+((?:Bar|\d+)\/(?:Bar|Off|\d+)\*?(?:\(\d+\))?(?:\s+(?:Bar|\d+)\/(?:Bar|Off|\d+)\*?(?:\(\d+\))?)*)\s+eq:([+\-]?\d+,\d+)/gm;
 
   const bestMoves: Move[] = [];
   let match;
@@ -210,7 +210,7 @@ function stringToNums(str: string, player: string) {
     const count = multiplierMatch ? parseInt(multiplierMatch[1]) : 1;
 
     // Remove the (n) to get clean move
-    const cleanPart = part.replace(/\(\d+\)$/, "");
+    const cleanPart = part.replace(/\(\d+\)$/, "").replace(/\*$/, "");
     const [from, to] = cleanPart.split("/");
 
     const fromNum =

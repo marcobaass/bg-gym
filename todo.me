@@ -70,6 +70,7 @@
 [x] parser adjust to 2-ply, 3-ply and 1ply
 [x] delete single positions or move in diffrent category
 [x] guarding default categories / no move or delete here
+[x] option for setting how many positions to train
 [ ] cube descicions buttons on board
 [ ] adjustments for mobile
 ----------------------------------------------------------------------------------
@@ -105,7 +106,19 @@
     [~] modal or dialog for ask if really delete category
     [x] delete category
     [x] delete positions
-[ ] training flow options
-    [ ] option for setting how many positions to train
+[ ] training flow options    
     [ ] option in next/done modal to quit session
 
+
+Homepage (app/page.tsx):
+
+[ ] Add a "Positions per session" dropdown next to the existing sort/filter dropdown
+    [ ]     Options: e.g. 10, 20, 30, 50, All
+    [ ] On mount: read from localStorage (e.g. key positionsPerSession), default to All if not set
+    [ ] On change: write to localStorage
+
+
+[ ] Board page (app/board/BoardPageClient.tsx):
+    [ ] After fetching and shuffling positions, read positionsPerSession from localStorage
+    [ ] Slice the shuffled array to at most that limit (unless All)
+    [ ] Everything else (scoring, session save, navigation) works unchanged since it already uses positionData.length

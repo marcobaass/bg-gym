@@ -107,7 +107,18 @@ export default function BoardPageClient() {
       setCategories(newCategorys);
       const shuffled = [...categoryPositions];
       const shuffledPositions = shufflePositions(shuffled);
-      setPositionData(shuffledPositions);
+      const positionCount =
+        localStorage.getItem("positionsPerSession") ?? "all";
+
+      if (positionCount === "all") {
+        setPositionData(shuffledPositions);
+      } else {
+        const limitedPositions = shuffledPositions.slice(
+          0,
+          Number(positionCount),
+        );
+        setPositionData(limitedPositions);
+      }
       setIsLoading(false);
     };
 

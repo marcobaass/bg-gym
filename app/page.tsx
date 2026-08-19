@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import type { SessionsByCategory, UserLibrary } from "@/types/board";
 import {
   importLocalStorageToSupabase,
@@ -29,6 +30,11 @@ function lastFinishedAtMs(
   if (sessions.length === 0) return -Infinity; // never trained
   return Math.max(...sessions.map((s) => s.finishedAt));
 }
+
+const PositionsPerSessionSelect = dynamic(
+  () => import("@/components/PositionsPerSessionSelect"),
+  { ssr: false },
+);
 
 export default function Home() {
   const [userLibrary, setUserLibrary] = useState<UserLibrary>();
@@ -140,7 +146,15 @@ export default function Home() {
       <Login />
       <h1 className="text-2xl font-bold">Welcome to the Backgammon Gym</h1>
 
-      <h2 className="text-lg font-bold">Pick a category and start training</h2>
+      {/* Dropdown for positions per session */}
+
+      <div className="flex items-center justify-start gap-2">
+        <h2 className="text-lg font-bold">
+          Pick a category and start training
+        </h2>
+        <PositionsPerSessionSelect />
+        <h2 className="text-lg font-bold">Positions</h2>
+      </div>
 
       {/* Default Category Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-white rounded-lg shadow-md p-4">

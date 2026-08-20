@@ -30,7 +30,11 @@ export async function getUserLibrary(
   if (user) {
     return await loadUserLibraryFromSupabase(supabase);
   } else {
-    return loadUserLibrary();
+    const localLibrary = loadUserLibrary();
+    const remoteLibrary = await loadUserLibraryFromSupabase(supabase);
+    return {
+      library: [...localLibrary.library, ...remoteLibrary.library],
+    };
   }
 }
 

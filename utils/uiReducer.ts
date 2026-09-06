@@ -1,16 +1,17 @@
-import { Position } from '@/types/board';
+import { Position } from "@/types/board";
 
 function diceFromRoll(diceRoll?: number | null): number[] {
-  if (!diceRoll) return []
-  const d1 = Math.floor(diceRoll / 10)
-  const d2 = diceRoll % 10
-  return d1 === d2 ? [d1, d1, d1, d1] : [d1, d2]
+  if (!diceRoll) return [];
+  const d1 = Math.floor(diceRoll / 10);
+  const d2 = diceRoll % 10;
+  return d1 === d2 ? [d1, d1, d1, d1] : [d1, d2];
 }
 
 export type Move = {
   from: number;
   to: number;
-}
+  hit: boolean;
+};
 
 export type UIState = {
   selectedPoint: number | null;
@@ -29,8 +30,14 @@ type Action =
   | { type: "SET_MOVES"; moves: number[] }
   | { type: "SET_DICE"; dice: number[] }
   | { type: "ADD_SCORE"; score: number }
-  | { type: "APPLY_MOVE"; from: number; to: number , newDice: number[], historyEntry: MoveHistoryEntry}
-  | { type: "UNDO_MOVE"}
+  | {
+      type: "APPLY_MOVE";
+      from: number;
+      to: number;
+      newDice: number[];
+      historyEntry: MoveHistoryEntry;
+    }
+  | { type: "UNDO_MOVE" };
 
 /**
  * Constants & Initial State
@@ -43,10 +50,10 @@ export const INITIAL_UI_STATE: UIState = {
   moves: [],
   score: 0,
   totalScore: 0,
-  moveHistory: []
+  moveHistory: [],
 };
 
-/** 
+/**
  * Undo State Management
  */
 export type MoveHistoryEntry = {
@@ -55,7 +62,7 @@ export type MoveHistoryEntry = {
   prevSelectedPoint: number | null;
   prevAvailableMoves: number[];
   prevMoves: Move[];
-}
+};
 
 /**
  * Reducer: Manages the UI interaction state
@@ -71,94 +78,103 @@ export function uiReducer(state: UIState, action: Action): UIState {
         moves: [],
         score: 0,
         totalScore: state.totalScore,
-        moveHistory: []
-      }
+        moveHistory: [],
+      };
     case "SELECT_POINT":
-      return { ...state, selectedPoint: action.point }
+      return { ...state, selectedPoint: action.point };
     case "SET_MOVES":
-      return { ...state, availableMoves: action.moves }
+      return { ...state, availableMoves: action.moves };
     case "SET_DICE":
-      return { ...state, remainingDice: action.dice }
+      return { ...state, remainingDice: action.dice };
     case "ADD_SCORE":
-      return { ...state, score: action.score, totalScore: state.totalScore + action.score }
-    
+      return {
+        ...state,
+        score: action.score,
+        totalScore: state.totalScore + action.score,
+      };
+
     // Apply a move to the current position
     case "APPLY_MOVE": {
-      if (!state.currentPosition) return state
+      if (!state.currentPosition) return state;
 
-      const updatedPosition = { ...state.currentPosition }
+      const updatedPosition = { ...state.currentPosition };
 
       // Get the owner based on whose turn it is
-      const checkerOwner = updatedPosition.playerToPlay
+      const checkerOwner = updatedPosition.playerToPlay;
 
       // Check if bearing off
       if (action.to >= 24) {
-        updatedPosition.blackOff += 1
+        updatedPosition.blackOff += 1;
       } else if (action.to < 0) {
-        updatedPosition.whiteOff += 1
+        updatedPosition.whiteOff += 1;
       }
 
       // Check if moving from bar
       if (action.from === -1) {
         // Moving white checker from bar
-        updatedPosition.barWhite -= 1
+        updatedPosition.barWhite -= 1;
       } else if (action.from === -2) {
         // Moving black checker from bar
-        updatedPosition.barBlack -= 1
+        updatedPosition.barBlack -= 1;
       } else {
         // Moving from regular point - update points array
         updatedPosition.points = updatedPosition.points.map((point, index) => {
           if (index === action.from) {
-            const newCount = point.count - 1
+            const newCount = point.count - 1;
             return {
               ...point,
               count: newCount,
-              owner: newCount === 0 ? undefined : point.owner
-            }
+              owner: newCount === 0 ? undefined : point.owner,
+            };
           }
-          return point
-        })
+          return point;
+        });
       }
 
       // Add to destination if it's a regular point (not bearing off) and check for hit
+      let hit = false;
       if (action.to >= 0 && action.to < 24) {
         updatedPosition.points = updatedPosition.points.map((point, index) => {
           if (index === action.to) {
             // Check if this is an opponent's blot (single checker)
-            const isOpponentBlot = point.owner !== null && point.owner !== checkerOwner && point.count === 1;
+            const isOpponentBlot =
+              point.owner !== null &&
+              point.owner !== checkerOwner &&
+              point.count === 1;
 
             // If hitting a blot, send opponent's checker to the bar
             if (isOpponentBlot) {
-              if (point.owner === 'White') {
-                updatedPosition.barWhite += 1
+              hit = isOpponentBlot;
+              if (point.owner === "White") {
+                updatedPosition.barWhite += 1;
               } else {
-                updatedPosition.barBlack += 1
+                updatedPosition.barBlack += 1;
               }
             }
-            
+
             return {
               ...point,
               count: isOpponentBlot ? 1 : point.count + 1,
               owner: checkerOwner,
-            }
+            };
           }
-          return point
-        })
+          return point;
+        });
       }
 
       return {
         ...state,
         currentPosition: updatedPosition,
-        moves: [...state.moves, { from: action.from, to: action.to }],
+        moves: [...state.moves, { from: action.from, to: action.to, hit }],
         moveHistory: [...state.moveHistory, action.historyEntry],
         remainingDice: action.newDice,
         selectedPoint: null,
         availableMoves: [],
-      }
+      };
     }
     case "UNDO_MOVE": {
-      if (state.moveHistory.length === 0) return state
-      const lastMove = state.moveHistory[state.moveHistory.length - 1]
+      if (state.moveHistory.length === 0) return state;
+      const lastMove = state.moveHistory[state.moveHistory.length - 1];
       return {
         ...state,
         currentPosition: lastMove.prevCurrentPosition,
@@ -167,9 +183,9 @@ export function uiReducer(state: UIState, action: Action): UIState {
         availableMoves: lastMove.prevAvailableMoves,
         moves: lastMove.prevMoves,
         moveHistory: state.moveHistory.slice(0, -1),
-      }
+      };
     }
     default:
-      return state
+      return state;
   }
 }

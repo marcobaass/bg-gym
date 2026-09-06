@@ -1,6 +1,6 @@
 import { Color } from "@/types/board";
 
-type UserMove = { from: number; to: number };
+type UserMove = { from: number; to: number; hit: boolean };
 type BestMove = { rank: number; move: number[][]; equity?: number };
 
 export function compareWithBestMoves(
@@ -19,23 +19,30 @@ export function compareWithBestMoves(
 
 // Helpers
 function normalizeUserMoves(userMoves: UserMove[]): number[][] {
-  const journeys: { start: number; current: number }[] = [];
+  // object to build the notation
+  const journeys: { start: number; current: number; hit: boolean }[] = [];
 
   for (const move of userMoves) {
     const journeyIndex = journeys.findIndex(
       (journey) => journey.current === move.from,
     );
 
-    if (journeyIndex !== -1) {
+    if (journeyIndex !== -1 && journeys[journeyIndex].hit === false) {
       // Continue existing journey
       journeys[journeyIndex].current = move.to;
+      journeys[journeyIndex].hit = move.hit;
     } else {
       // Start new journey
-      journeys.push({ start: move.from, current: move.to });
+      journeys.push({ start: move.from, current: move.to, hit: move.hit });
     }
   }
 
   // Return as [start, end] pairs
+  console.log(
+    "start-end-pair",
+    journeys.map((j) => [j.start, j.current]),
+  );
+
   return journeys.map((j) => [j.start, j.current]);
 }
 
@@ -86,8 +93,12 @@ function areMovesSame(move1: number[][], move2: number[][]) {
   const move1Copy = move1.map((m) => [...m]);
   const move2Copy = move2.map((m) => [...m]);
   if (move1Copy.length !== move2Copy.length) return false;
-  move1Copy.sort((a: number[], b: number[]) => a[0] - b[0]);
-  move2Copy.sort((a: number[], b: number[]) => a[0] - b[0]);
+  move1Copy.sort((a: number[], b: number[]) =>
+    a[0] === b[0] ? a[1] - b[1] : a[0] - b[0],
+  );
+  move2Copy.sort((a: number[], b: number[]) =>
+    a[0] === b[0] ? a[1] - b[1] : a[0] - b[0],
+  );
   return move1Copy.every(
     (innerMove, index) =>
       innerMove[0] === move2Copy[index][0] &&

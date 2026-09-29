@@ -12,7 +12,7 @@ import {
 import { Color } from "@/types/board";
 import { getAvailableMoves, isValidPoint } from "@/utils/move-utils";
 import { uiReducer, INITIAL_UI_STATE } from "@/utils/uiReducer";
-import { useState, useEffect, useReducer } from "react";
+import { useState, useEffect, useReducer, useRef } from "react";
 import { compareWithBestMoves } from "@/utils/compareBestMoves-utils";
 import { pointsFromEquityDiff } from "@/utils/scoring-utils";
 import { shufflePositions } from "@/utils/userLibrary";
@@ -70,6 +70,8 @@ export default function BoardPageClient() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  const lastLoadedKeyRef = useRef<string | null>(null);
+
   //User data from Supabase
   useEffect(() => {
     const fetchUser = async () => {
@@ -95,6 +97,12 @@ export default function BoardPageClient() {
   useEffect(() => {
     if (user === undefined) return;
 
+    const loadedKey =
+      user === null
+        ? `guest-${searchParamsCategoryId}`
+        : `${user.id}-${searchParamsCategoryId}`;
+    if (loadedKey === lastLoadedKeyRef.current) return;
+
     const fetchPositionData = async () => {
       const userLibrary = await getUserLibrary(supabase, user);
       const categoryPositions =
@@ -119,6 +127,7 @@ export default function BoardPageClient() {
         );
         setPositionData(limitedPositions);
       }
+      lastLoadedKeyRef.current = loadedKey;
       setIsLoading(false);
     };
 

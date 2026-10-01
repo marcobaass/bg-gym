@@ -10,8 +10,12 @@ import {
   CategorySession,
 } from "@/types/board";
 import { Color } from "@/types/board";
-import { getAvailableMoves, isValidPoint } from "@/utils/move-utils";
-import { uiReducer, INITIAL_UI_STATE } from "@/utils/uiReducer";
+import {
+  getAvailableMoves,
+  getNumberOfPlayableDice,
+  isValidPoint,
+} from "@/utils/move-utils";
+import { uiReducer, INITIAL_UI_STATE, diceFromRoll } from "@/utils/uiReducer";
 import { useState, useEffect, useReducer, useRef } from "react";
 import { compareWithBestMoves } from "@/utils/compareBestMoves-utils";
 import { pointsFromEquityDiff } from "@/utils/scoring-utils";
@@ -333,6 +337,15 @@ export default function BoardPageClient() {
     setResult(undefined);
   };
 
+  const canISubmitMove = () => {
+    const startPosition = positionData[currentPositionIndex];
+    if (!startPosition) return false;
+    const originalDice = diceFromRoll(startPosition.diceRoll);
+    const maxDiceUsable = getNumberOfPlayableDice(startPosition, originalDice);
+    const usedDice = originalDice.length - ui.remainingDice.length;
+    return usedDice === maxDiceUsable;
+  };
+
   const isCubePosition = current?.analysisType === "Cube";
 
   return isLoading ? (
@@ -411,7 +424,7 @@ export default function BoardPageClient() {
                 disabled={
                   isConfirmed ||
                   (current?.analysisType === "Move"
-                    ? ui.remainingDice.length > 0
+                    ? !canISubmitMove()
                     : cubeDecision === null)
                 }
               />

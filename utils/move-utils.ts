@@ -281,3 +281,141 @@ export function getDieUsedForBearOff(
   if (validDies.length > 0) return validDies[0];
   return null;
 }
+
+/**
+ * Check for number of playable dice for a given position
+ */
+export function getNumberOfPlayableDice(
+  position: Position,
+  dice: number[],
+): number {
+  // base case: no dice
+  if (dice.length === 0) return 0;
+  if (!hasAnyLegalMoves(position, dice)) return 0;
+
+  // recursive case: check if any dice are playable
+  let best = 0;
+
+  for (let index = 0; index < dice.length; index++) {
+    const die = dice[index];
+
+    const bar = getBarPointForPlayer(position.playerToPlay);
+    let barDestinations: number[] = [];
+    if (isValidPoint(position, bar, [die])) {
+      barDestinations = getAvailableMoves(bar, [die], position);
+
+      for (const to of barDestinations) {
+        const nextPosition = applyMove(position, bar, to);
+        const nextDice = [...dice.slice(0, index), ...dice.slice(index + 1)];
+
+        const further = getNumberOfPlayableDice(nextPosition, nextDice);
+        best = Math.max(best, 1 + further);
+      }
+    }
+
+    let destinations: number[] = [];
+    for (let i = 0; i < 24; i++) {
+      if (isValidPoint(position, i, [die])) {
+        destinations = getAvailableMoves(i, [die], position);
+
+        for (const to of destinations) {
+          const nextPosition = applyMove(position, i, to);
+          const nextDice = [...dice.slice(0, index), ...dice.slice(index + 1)];
+
+          const further = getNumberOfPlayableDice(nextPosition, nextDice);
+          best = Math.max(best, 1 + further);
+        }
+      }
+    }
+  }
+
+  return best;
+}
+
+//Helper functions for getNumberOfPlayableDice
+function hasAnyLegalMoves(position: Position, dice: number[]): boolean {
+  if (dice.length === 0) return false;
+
+  const bar = getBarPointForPlayer(position.playerToPlay);
+  if (isValidPoint(position, bar, dice)) return true;
+
+  for (let i = 0; i < 24; i++) {
+    if (isValidPoint(position, i, dice)) return true;
+  }
+  return false;
+}
+
+/**
+ * Apply a move to a position
+ */
+export function applyMove(
+  position: Position,
+  from: number,
+  to: number,
+): Position {
+  if (!position) return position;
+
+  const updatedPosition = { ...position };
+
+  // Get the owner based on whose turn it is
+  const checkerOwner = updatedPosition.playerToPlay;
+
+  // Check if bearing off
+  if (to >= 24) {
+    updatedPosition.blackOff += 1;
+  } else if (to < 0) {
+    updatedPosition.whiteOff += 1;
+  }
+
+  // Check if moving from bar
+  if (from === -1) {
+    // Moving white checker from bar
+    updatedPosition.barWhite -= 1;
+  } else if (from === -2) {
+    // Moving black checker from bar
+    updatedPosition.barBlack -= 1;
+  } else {
+    // Moving from regular point - update points array
+    updatedPosition.points = updatedPosition.points.map((point, index) => {
+      if (index === from) {
+        const newCount = point.count - 1;
+        return {
+          ...point,
+          count: newCount,
+          owner: newCount === 0 ? undefined : point.owner,
+        };
+      }
+      return point;
+    });
+  }
+
+  if (to >= 0 && to < 24) {
+    updatedPosition.points = updatedPosition.points.map((point, index) => {
+      if (index === to) {
+        // Check if this is an opponent's blot (single checker)
+        const isOpponentBlot =
+          point.owner !== null &&
+          point.owner !== checkerOwner &&
+          point.count === 1;
+
+        // If hitting a blot, send opponent's checker to the bar
+        if (isOpponentBlot) {
+          if (point.owner === "White") {
+            updatedPosition.barWhite += 1;
+          } else {
+            updatedPosition.barBlack += 1;
+          }
+        }
+
+        return {
+          ...point,
+          count: isOpponentBlot ? 1 : point.count + 1,
+          owner: checkerOwner,
+        };
+      }
+      return point;
+    });
+  }
+
+  return updatedPosition;
+}

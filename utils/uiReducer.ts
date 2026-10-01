@@ -1,6 +1,7 @@
 import { Position } from "@/types/board";
+import { applyMove } from "./move-utils";
 
-function diceFromRoll(diceRoll?: number | null): number[] {
+export function diceFromRoll(diceRoll?: number | null): number[] {
   if (!diceRoll) return [];
   const d1 = Math.floor(diceRoll / 10);
   const d2 = diceRoll % 10;
@@ -96,72 +97,19 @@ export function uiReducer(state: UIState, action: Action): UIState {
     // Apply a move to the current position
     case "APPLY_MOVE": {
       if (!state.currentPosition) return state;
-
-      const updatedPosition = { ...state.currentPosition };
-
-      // Get the owner based on whose turn it is
-      const checkerOwner = updatedPosition.playerToPlay;
-
-      // Check if bearing off
-      if (action.to >= 24) {
-        updatedPosition.blackOff += 1;
-      } else if (action.to < 0) {
-        updatedPosition.whiteOff += 1;
-      }
-
-      // Check if moving from bar
-      if (action.from === -1) {
-        // Moving white checker from bar
-        updatedPosition.barWhite -= 1;
-      } else if (action.from === -2) {
-        // Moving black checker from bar
-        updatedPosition.barBlack -= 1;
-      } else {
-        // Moving from regular point - update points array
-        updatedPosition.points = updatedPosition.points.map((point, index) => {
-          if (index === action.from) {
-            const newCount = point.count - 1;
-            return {
-              ...point,
-              count: newCount,
-              owner: newCount === 0 ? undefined : point.owner,
-            };
-          }
-          return point;
-        });
-      }
-
-      // Add to destination if it's a regular point (not bearing off) and check for hit
       let hit = false;
       if (action.to >= 0 && action.to < 24) {
-        updatedPosition.points = updatedPosition.points.map((point, index) => {
-          if (index === action.to) {
-            // Check if this is an opponent's blot (single checker)
-            const isOpponentBlot =
-              point.owner !== null &&
-              point.owner !== checkerOwner &&
-              point.count === 1;
-
-            // If hitting a blot, send opponent's checker to the bar
-            if (isOpponentBlot) {
-              hit = isOpponentBlot;
-              if (point.owner === "White") {
-                updatedPosition.barWhite += 1;
-              } else {
-                updatedPosition.barBlack += 1;
-              }
-            }
-
-            return {
-              ...point,
-              count: isOpponentBlot ? 1 : point.count + 1,
-              owner: checkerOwner,
-            };
-          }
-          return point;
-        });
+        hit =
+          state.currentPosition.points[action.to].count === 1 &&
+          state.currentPosition.points[action.to].owner !==
+            state.currentPosition.playerToPlay &&
+          state.currentPosition.points[action.to].owner !== undefined;
       }
-
+      const updatedPosition = applyMove(
+        state.currentPosition,
+        action.from,
+        action.to,
+      );
       return {
         ...state,
         currentPosition: updatedPosition,
@@ -172,6 +120,7 @@ export function uiReducer(state: UIState, action: Action): UIState {
         availableMoves: [],
       };
     }
+
     case "UNDO_MOVE": {
       if (state.moveHistory.length === 0) return state;
       const lastMove = state.moveHistory[state.moveHistory.length - 1];

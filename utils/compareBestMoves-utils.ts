@@ -18,6 +18,16 @@ export function compareWithBestMoves(
 }
 
 // Helpers
+
+/**
+ * Merges single moves into journeys (13/8 + 8/4 → 13/4). All 0-based.
+ *
+ * move:    from → to        (single die move)
+ * journey: start → current  (merged path)
+ *
+ * journeyIndex: journey ends where move starts  → append
+ * prependIndex: journey starts where move ends  → prepend
+ */
 function normalizeUserMoves(userMoves: UserMove[]): number[][] {
   // object to build the notation
   const journeys: { start: number; current: number; hit: boolean }[] = [];
@@ -27,10 +37,16 @@ function normalizeUserMoves(userMoves: UserMove[]): number[][] {
       (journey) => journey.current === move.from,
     );
 
+    const prependIndex = journeys.findIndex(
+      (journey) => journey.start === move.to,
+    );
+
     if (journeyIndex !== -1 && journeys[journeyIndex].hit === false) {
       // Continue existing journey
       journeys[journeyIndex].current = move.to;
       journeys[journeyIndex].hit = move.hit;
+    } else if (prependIndex !== -1 && move.hit === false) {
+      journeys[prependIndex].start = move.from;
     } else {
       // Start new journey
       journeys.push({ start: move.from, current: move.to, hit: move.hit });
